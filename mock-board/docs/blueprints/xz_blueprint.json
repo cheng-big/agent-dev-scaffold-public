@@ -1,0 +1,1 @@
+{ "pages": [{ "menu_group": "用户", "data": ["userId","name"], "action": ["create","disable"], "input": ["orgId 下拉"] }] }

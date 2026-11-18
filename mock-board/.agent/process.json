@@ -1,0 +1,359 @@
+{
+  "process_version": 1,
+  "name": "开发全流程",
+  "phases": [
+    {
+      "id": "understand",
+      "no": "01",
+      "icon": "📖",
+      "name": "读懂需求",
+      "intent": "把 PDF 翻译成机器可追踪的真源",
+      "what": "通读原始真源，提炼系统清单/菜单树/状态机/实体关系，作为整个项目的标准答案",
+      "why": "凭记忆建系统=建错系统；需求有歧义时显式标记，不替业务做主（默认值≠已确认）",
+      "skills": [
+        "kando-macro-architecture-extractor"
+      ],
+      "inputs": [
+        {
+          "key": "prd",
+          "name": "需求文档",
+          "desc": "原始需求真源（PDF / PRD 等）——安装后改成本项目真实路径",
+          "path": "docs/需求文档.pdf"
+        }
+      ],
+      "depends_on": [],
+      "gates": [
+        "grounding 必须中立，读它到底定义了什么，禁止预贴标签"
+      ],
+      "dod": [
+        "系统清单/菜单树/状态机/实体矩阵已业务确认"
+      ],
+      "artifacts": [
+        {
+          "key": "spec",
+          "name": "需求骨架",
+          "desc": "确认过的系统清单/菜单树/状态机/实体矩阵",
+          "path": "docs/product/<sys>/spec.md",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "reverse-design",
+      "no": "02",
+      "icon": "🧩",
+      "name": "逆向设计",
+      "intent": "把需求榨干成架构 + 验收剧本（页面契约独立为下一阶段）",
+      "what": "L0 宏观架构 + L4 脏数据探针提取（L2 页面级原子契约独立为下一阶段 page-contract）；歧义一律熔断挂起",
+      "why": "政企 PRD 最大的坑是看着全其实漏；提取 + 熔断把隐性缺口显性化，产物标准化可复用",
+      "skills": [
+        "kando-macro-architecture-extractor",
+        "kando-product-spec-generator",
+        "dirty-data-probe"
+      ],
+      "depends_on": [
+        "understand"
+      ],
+      "gates": [
+        "凡不闭环/矛盾/缺失/落差一律进 AMBIGUITIES-INDEX 熔断账并标 [ASSUMPTION 待业务确认]",
+        "功能点不 1:1 铺菜单，按流程+优先级+受众收敛 IA",
+        "产物(arch/blueprint/probe/PRD/契约)变更后重跑 `node .agent/scripts/build_viewer.mjs` 刷新 docs/viewer.html 可视化，供业务在看板点开逐页核对"
+      ],
+      "dod": [
+        "六类产品交付物齐备",
+        "覆盖矩阵逐条登记归口（不假装全做）",
+        "docs/viewer.html 已生成且与产物同步（build_viewer.mjs 重跑无误）"
+      ],
+      "artifacts": [
+        {
+          "key": "arch",
+          "name": "宏观架构",
+          "desc": "系统拓扑/耦合矩阵/数据血缘/RBAC/API 契约目录",
+          "path": "docs/architecture/<sys>_arch.json",
+          "required": true
+        },
+        {
+          "key": "probe",
+          "name": "脏数据探针",
+          "desc": "五段式生命周期剧本 + 跨系统穿透引用",
+          "path": "docs/probes/<sys>_probe.json",
+          "required": true
+        },
+        {
+          "key": "coverage-matrix",
+          "name": "覆盖矩阵",
+          "desc": "功能点树全量逐条 + 归口登记，后续 DoD 的追踪基准",
+          "path": "docs/product/<sys>/coverage-matrix.md",
+          "required": true
+        },
+        {
+          "key": "data-model",
+          "name": "数据模型",
+          "desc": "全量实体字段/关系",
+          "path": "docs/product/<sys>/data-model.md",
+          "required": false
+        },
+        {
+          "key": "ambiguities",
+          "name": "歧义熔断账",
+          "desc": "[ASSUMPTION] 挂账，等业务拍板",
+          "path": "docs/product/AMBIGUITIES-INDEX.md",
+          "required": false
+        },
+        {
+          "key": "viewer",
+          "name": "产物可视化",
+          "desc": "自包含 HTML，内嵌全部产物（架构/契约/数据模型/状态机/探针/API），双击即开；由 .agent/scripts/build_viewer.mjs 自动发现 docs/ 产物生成，产物变更后重跑刷新",
+          "path": "docs/viewer.html",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "page-contract",
+      "no": "03",
+      "icon": "📐",
+      "name": "页面契约·约束优先",
+      "intent": "开发前把每页字段/接口/交互定死并逐页确认签核",
+      "what": "用 anti-omission-dev-blueprint 把页面拆成原子契约（data/action/input 三视图，按 menu_group 分组），产 JSON 真源 + 渲染 HTML 可读蓝图，逐页确认",
+      "why": "契约优先=开发前锁死页面约束，杜绝开发时漏字段/漏接口/手填 ID；单独成阶段便于业务逐页签核、可点开查看",
+      "skills": [
+        "anti-omission-dev-blueprint"
+      ],
+      "depends_on": [
+        "reverse-design"
+      ],
+      "gates": [
+        "逐页 data/action/input 三视图齐全，不闭环/矛盾/缺失一律进 AMBIGUITIES-INDEX 熔断",
+        "引用别的实体一律下拉选择（值=业务主键、显示=双语名），契约里严禁手填 ID"
+      ],
+      "dod": [
+        "页面契约逐页业务确认签核"
+      ],
+      "artifacts": [
+        {
+          "key": "blueprint",
+          "name": "页面蓝图",
+          "desc": "页面级原子契约（data/action/input 三视图，按 menu_group 分组）",
+          "path": "docs/blueprints/<sys>_blueprint.json",
+          "required": true
+        },
+        {
+          "key": "blueprint-render",
+          "name": "契约渲染页",
+          "desc": "blueprint_render.html 渲染的分级可视化开发蓝图，供人工确认查看",
+          "path": "docs/blueprints/<sys>_blueprint.html",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "foundation",
+      "no": "04",
+      "icon": "🧱",
+      "name": "夯实地基",
+      "intent": "先把所有系统都要用的公共内核建好",
+      "what": "搭骨架 + 建共享内核：统一身份认证/RBAC/地区字典/业务系统名录/统一软删除基类/安全上下文；内核模块评审用 agent-skills:code-reviewer",
+      "why": "公共能力各建一套=数据打架、无法互引；业务系统一律指向内核唯一真源并用外键锁死",
+      "skills": [
+        "kando-system-build",
+        "agent-skills:code-reviewer"
+      ],
+      "depends_on": [
+        "page-contract"
+      ],
+      "gates": [
+        "共享内核单一真源，引用一律外键锁死杜绝孤儿数据"
+      ],
+      "dod": [
+        "内核模块编译绿 + 数据库迁移可跑"
+      ],
+      "artifacts": [
+        {
+          "key": "platform-modules",
+          "name": "平台内核模块",
+          "desc": "platform.* 内核模块（auth/approval/message/mid/region/dict/menu/identity…）",
+          "path": "src/main/java/com/xizang/fitness/platform",
+          "required": true
+        },
+        {
+          "key": "migrations",
+          "name": "数据库迁移",
+          "desc": "Flyway V*.sql 迁移脚本",
+          "path": "src/main/resources/db/migration",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "build-systems",
+      "no": "05",
+      "icon": "⚙️",
+      "name": "逐系统建造",
+      "intent": "一次一个系统，全栈闭环",
+      "what": "每系统跑一条流水线：物化spec→后端→编译门→前端→build门→真跑冒烟→对抗评审",
+      "why": "每步之间卡质量门，编不过/build 不过/起不来就地修，不带病往下走",
+      "skills": [
+        "kando-system-build"
+      ],
+      "depends_on": [
+        "foundation"
+      ],
+      "worklist": [
+        {
+          "key": "db",
+          "name": "数据库设计",
+          "desc": "表结构 + Flyway 迁移"
+        },
+        {
+          "key": "api",
+          "name": "API 契约设计",
+          "desc": "据页面契约定 Controller 接口"
+        },
+        {
+          "key": "backend",
+          "name": "后端开发",
+          "desc": "实体/Service/Controller 落地 + 编译门"
+        },
+        {
+          "key": "frontend",
+          "name": "前端开发",
+          "desc": "路由 + 页面 + 下拉选择 + build 门"
+        },
+        {
+          "key": "role",
+          "name": "角色开发",
+          "desc": "角色定义 + 菜单/数据范围"
+        },
+        {
+          "key": "perm",
+          "name": "权限开发",
+          "desc": "接口/按钮/数据级鉴权"
+        },
+        {
+          "key": "test",
+          "name": "测试",
+          "desc": "真跑冒烟 + 探针可见正确性"
+        }
+      ],
+      "gates": [
+        "前端引用别的实体一律下拉选择（值=业务主键、显示=双语名），严禁手填 ID",
+        "每步卡质量门，不带病往下走"
+      ],
+      "dod": [
+        "业务模块全栈落地：后端 + 前端页面 + 编译/build 门全过"
+      ],
+      "artifacts": [
+        {
+          "key": "backend-modules",
+          "name": "后端业务模块",
+          "desc": "modules.* 业务模块（迁移+实体+Service+Controller）",
+          "path": "src/main/java/com/xizang/fitness/modules/<sys>",
+          "required": true
+        },
+        {
+          "key": "frontend-views",
+          "name": "前端页面",
+          "desc": "路由 + 下拉选择页面",
+          "path": "apps/web/src/views/<sys>",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "verify",
+      "no": "06",
+      "icon": "🔬",
+      "name": "做实验证",
+      "intent": "用探针把假完成钉死在墙上",
+      "what": "三层探针（契约层/浏览器层/流程层）真浏览器点 + 后端回查，点不通如实判红",
+      "why": "接口 200 骗不了人；判 UI 能不能跑的唯一权威是真去点，不是 grep 源码猜",
+      "skills": [
+        "flow-probe",
+        "dirty-data-probe"
+      ],
+      "depends_on": [
+        "build-systems"
+      ],
+      "gates": [
+        "编译过≠跑得通 · 覆盖高≠没缺口 · 返回 200≠功能做实",
+        "红项须独立对抗复核，自己说做好了不算数"
+      ],
+      "dod": [
+        "系统接入跑绿，探针可见正确性，无假绿"
+      ],
+      "artifacts": [
+        {
+          "key": "probe-scripts",
+          "name": "探针脚本",
+          "desc": "契约/浏览器/流程三层探针",
+          "path": "harness",
+          "required": true
+        },
+        {
+          "key": "flow-report",
+          "name": "合并报告",
+          "desc": "可交互报告，每步标 PASS/GAP/MISMATCH/ERROR + 截图 + 修复意见",
+          "path": "harness/reports/flow-report.html",
+          "required": true
+        },
+        {
+          "key": "systems-truth",
+          "name": "机器真值",
+          "desc": "权威数据源 JSON（真跑成啥）",
+          "path": "harness/reports/systems/<sys>.json",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "no": "07",
+      "icon": "🚀",
+      "name": "交付复盘",
+      "intent": "部署上线 + 缺口盘点",
+      "what": "Docker 全栈打包，冒烟以真登录能看到数据为准；以代码为现状、设计文档为应然逐条缺口盘点",
+      "why": "交付不是打完包就完事；留一份 P0/P1/P2 漏项矩阵，让谁接手都知道哪些做实、哪些还挂着",
+      "skills": [
+        "kando-gap-fill-driver"
+      ],
+      "depends_on": [
+        "verify"
+      ],
+      "gates": [
+        "剩余缺口以 GAP 形式诚实挂起，不伪装成已完成"
+      ],
+      "dod": [
+        "可运行部署 + 缺口报告成账"
+      ],
+      "artifacts": [
+        {
+          "key": "gapcheck",
+          "name": "缺口盘点",
+          "desc": "GROUNDING-GAPCHECK：应然 vs 现状逐条对齐",
+          "path": "docs/GROUNDING-GAPCHECK.md",
+          "required": true
+        },
+        {
+          "key": "build-ledger",
+          "name": "进度台账",
+          "desc": "BUILD-LEDGER（真值以 systems/*.json 为准）",
+          "path": "docs/BUILD-LEDGER.md",
+          "required": false
+        }
+      ]
+    }
+  ],
+  "rails": [
+    {
+      "id": "memory",
+      "name": "记得住 · 任务记忆",
+      "desc": "防遗忘/防中断；最终事实=代码/Git/测试/真实系统状态，不是聊天记录"
+    },
+    {
+      "id": "dod",
+      "name": "做得实 · DoD 纪律",
+      "desc": "防假绿；一个功能完成必须端到端真串通 + 真实种子数据 + 探针可见正确性 + 无假绿"
+    }
+  ]
+}

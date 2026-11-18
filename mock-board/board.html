@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>开发全流程 · 进度看板</title>
+<style>
+  :root{--paper:#f4f6f2;--surface:#fbfcfa;--ink:#17211d;--sub:#5f6d66;--dim:#8a97a5;--line:#cbd4ce;--green:#15664e;--red:#aa4638;--amber:#a87518;--serif:"Songti SC","Noto Serif CJK SC",Georgia,serif;--sans:"PingFang SC","Noto Sans CJK SC",sans-serif;--mono:"SFMono-Regular",Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.7;font-size:15px}
+  .wrap{width:min(1120px,calc(100% - 40px));margin:0 auto}
+  h1{font-family:var(--serif);font-size:2rem;margin:28px 0 4px}
+  h2{font-family:var(--serif);font-size:1.3rem;margin:34px 0 12px;border-top:1px solid var(--line);padding-top:18px}
+  .lede{color:var(--sub);margin:0 0 8px}
+  code,.path{font-family:var(--mono);font-size:.82em}
+  .dim{color:var(--dim)} .okc{color:var(--green)} .warnc{color:var(--amber)} .redc{color:var(--red)}
+  .tabs{position:sticky;top:0;z-index:10;display:flex;gap:8px;background:var(--paper);padding:14px 0 12px;margin:6px 0 4px}
+  .tab{appearance:none;flex:1;cursor:pointer;font-family:var(--serif);font-size:1.12rem;font-weight:600;color:var(--sub);background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:16px 22px;display:flex;align-items:center;justify-content:center;gap:10px;transition:.15s}
+  .tab .ic{font-size:1.25rem}
+  .tab .cnt{font-family:var(--mono);font-size:.72rem;font-weight:700;background:var(--line);color:var(--sub);border-radius:20px;padding:1px 9px}
+  .tab:hover{border-color:var(--green);color:var(--green)}
+  .tab.on{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 4px 14px rgba(21,102,78,.28)}
+  .tab.on .cnt{background:rgba(255,255,255,.25);color:#fff}
+  .refs{font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+  .panel[hidden]{display:none}
+  .nextbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:8px 0;border:1px solid var(--green);border-left:5px solid var(--green);border-radius:8px;background:#e3eee8;padding:14px 18px}
+  .nb-k{color:var(--green);font-weight:700;font-size:.78rem;letter-spacing:.06em}
+  .nb-hint{color:var(--ink);font-size:.95rem} .nb-sk{color:var(--green);font-family:var(--mono);font-size:.78rem}
+  .metro{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-block:1px solid var(--ink)}
+  .stop{position:relative;border-left:1px solid var(--line);padding:16px 12px 20px;text-align:center}
+  .stop:first-child{border-left:0} .stop.cur{background:#e3eee8}
+  .dot{width:40px;height:40px;border-radius:50%;border:2px solid;display:grid;place-items:center;margin:0 auto 10px;font-size:18px;background:var(--surface)}
+  .stop .no{font-family:var(--mono);font-size:.7rem;color:var(--red)}
+  .stop .nm{font-family:var(--serif);font-weight:600;margin-top:2px}
+  .stop .st{font-size:.78rem;font-weight:700;margin-top:4px}
+  .stop .ct{font-size:.72rem;color:var(--dim);margin-top:2px}
+  .stop .here{margin-top:6px;font-size:.72rem;color:var(--green);font-weight:700}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;border-block:1px solid var(--ink);margin-top:8px}
+  th,td{border-bottom:1px solid var(--line);padding:11px 13px;text-align:left;vertical-align:top;overflow-wrap:anywhere;font-size:.84rem}
+  th{color:var(--green);font-size:.72rem}
+  table.acct td:first-child{width:15%;color:var(--ink)} table.acct td:nth-child(2){width:16%} table.acct td:nth-child(3){width:27%} table.acct td:nth-child(4){width:27%} table.acct td:nth-child(5){width:15%}
+  .opt{color:var(--dim);font-size:.9em}
+  .ins{margin-top:8px;padding-top:6px;border-top:1px dashed var(--line)}
+  .inslab{display:block;color:var(--amber);font-size:.68rem;font-weight:700;margin-bottom:2px}
+  .inrow{font-size:.76rem;color:var(--sub)}
+  .bandrow{display:flex;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line)}
+  .bandrow .bp{flex:0 0 150px;font-family:var(--serif);font-weight:600}
+  .bandrow .bs{flex:1;display:flex;flex-wrap:wrap;gap:6px}
+  .skpill,.evpill{border:1px solid var(--line);border-radius:20px;padding:2px 10px;font-size:.72rem}
+  .skpill{font-family:var(--mono)}
+  .wlwrap{overflow-x:auto;border-block:1px solid var(--ink)}
+  table.wl{table-layout:auto;border-block:0;margin:0;min-width:100%}
+  table.wl th{white-space:nowrap} table.wl td{text-align:center}
+  table.wl td.wlsys{text-align:left;white-space:nowrap;background:var(--surface)}
+  .wlsys b{font-family:var(--serif)} .wlprog{font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+  .wlcell{display:inline-block;border:1px solid;border-radius:20px;padding:1px 9px;font-size:.72rem;font-weight:700;white-space:nowrap}
+  .rails{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-block:1px solid var(--ink)}
+  .rail{padding:18px 16px;border-left:1px solid var(--line)} .rail:first-child{border-left:0}
+  .rail h3{margin:0 0 6px;font-family:var(--serif);font-size:1rem;color:var(--green)} .rail p{margin:0;color:var(--sub);font-size:.85rem}
+  .memstate{margin-top:8px;padding:12px 16px;border-radius:6px;font-size:.9rem}
+  .memstate.ok{background:#e3eee8;color:var(--green);border:1px solid var(--green)}
+  .memstate.warn{background:#f5eddc;color:var(--amber);border:1px solid var(--amber)}
+  .statgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-block:1px solid var(--ink)}
+  .stat{padding:16px 14px;border-left:1px solid var(--line)} .stat:nth-child(4n+1){border-left:0}
+  .stat b{display:block;font-family:var(--serif);font-size:1.25rem;color:var(--green);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .stat span{font-size:.72rem;color:var(--dim)}
+  .span{color:var(--sub);font-size:.82rem;margin:10px 0 0}
+  .pills{display:flex;flex-wrap:wrap;gap:8px} .evpill b{color:var(--green)}
+  .tcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .tcard{border:1px solid var(--line);border-radius:8px;padding:14px 16px;background:var(--surface)}
+  .tc-h{display:flex;align-items:center;gap:8px} .tc-h b{font-family:var(--mono);font-size:.85rem}
+  .badge{border:1px solid;border-radius:4px;padding:1px 8px;font-size:.72rem;font-weight:700}
+  .cur-tag{background:var(--green);color:#fff;border-radius:4px;padding:1px 7px;font-size:.68rem}
+  .tc-o{margin:8px 0 6px;font-size:.86rem} .tc-m{font-size:.8rem;color:var(--sub)}
+  .tc-b{margin-top:6px;font-size:.8rem;color:var(--amber)} .tc-r{margin-top:6px;font-size:.8rem;color:var(--sub)}
+  .tc-plan{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+  .plan-h{font-size:.72rem;color:var(--green);font-weight:700;margin-bottom:4px}
+  .planrow{font-size:.8rem;color:var(--sub);display:flex;gap:6px;padding:2px 0;overflow-wrap:anywhere}
+  .planrow .ck{color:var(--dim);font-weight:700;flex:0 0 auto}
+  .planrow.done{color:var(--ink)} .planrow.done .ck{color:var(--green)}
+  .tc-open{margin-top:6px;font-size:.8rem;color:var(--amber)}
+  .tc-ref{margin-top:6px;font-size:.76rem;color:var(--sub);overflow-wrap:anywhere}
+  .tc-ref a,.acct a{color:var(--green);text-decoration:none;border-bottom:1px solid var(--line)}
+  .tc-ref a:hover,.acct a:hover{border-bottom-color:var(--green)}
+  .reflab{color:var(--amber);font-size:.9em}
+  .tc-f{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:.75rem;color:var(--dim)}
+  .declist{border-top:1px solid var(--line)} .deca{display:flex;flex-direction:column;gap:2px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .deca b{font-size:.88rem} .deca span{font-size:.8rem;color:var(--sub)}
+  .anom{padding:8px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--line);margin:6px 0;font-size:.82rem}
+  .memtab td:first-child{width:15%} .memtab td:nth-child(2){width:17%} .memtab td:nth-child(4){width:20%}
+  footer{color:var(--dim);font-size:.75rem;padding:28px 0 48px;border-top:1px solid var(--line);margin-top:28px}
+  @media(max-width:760px){.metro{grid-template-columns:repeat(2,1fr)}.statgrid{grid-template-columns:repeat(2,1fr)}.stat:nth-child(4n+1){border-left:1px solid var(--line)}.stat:nth-child(2n+1){border-left:0}.tcards{grid-template-columns:1fr}.rails{grid-template-columns:1fr}.rail{border-left:0;border-top:1px solid var(--line)}.rail:first-child{border-top:0}.bandrow{flex-direction:column;gap:4px}.bandrow .bp{flex:auto}}
+</style></head>
+<body><div class="wrap">
+  <h1>开发全流程 · 进度看板</h1>
+  <p class="lede">数据来自 <code>.agent</code> 真实状态（产物磁盘回读、记忆 journal），非聊天记录。已完成阶段 4/7。</p>
+  <div class="tabs">
+    <button class="tab on" data-t="flow"><span class="ic">🧭</span> 流程 · 进度 <span class="cnt">4/7</span></button>
+    <button class="tab" data-t="mem"><span class="ic">🧬</span> 记忆 · 记得住 <span class="cnt">25</span></button>
+  </div>
+  <div id="flow" class="panel">
+
+  <div class="nextbar">
+    <span class="nb-k">下一步</span>
+    <span class="nb-hint">系统「赛事系统」→ 做「前端开发」（用 kando-system-build），做到哪标到哪：`worklist set --system match --task frontend --status in_progress|completed`。</span>
+    <span class="nb-sk">skill：kando-system-build</span>
+  </div>
+  <h2>开发生命周期 · 地铁线</h2>
+  <div class="metro">
+      <div class="stop">
+        <div class="dot" style="border-color:#15664e;color:#15664e">📖</div>
+        <div class="no">01</div>
+        <div class="nm">读懂需求</div>
+        <div class="st" style="color:#15664e">已完成</div>
+        <div class="ct">产物 0/1</div>
+
+      </div>
+      <div class="stop">
+        <div class="dot" style="border-color:#15664e;color:#15664e">🧩</div>
+        <div class="no">02</div>
+        <div class="nm">逆向设计</div>
+        <div class="st" style="color:#15664e">已完成</div>
+        <div class="ct">产物 0/6</div>
+
+      </div>
+      <div class="stop">
+        <div class="dot" style="border-color:#15664e;color:#15664e">📐</div>
+        <div class="no">03</div>
+        <div class="nm">页面契约·约束优先</div>
+        <div class="st" style="color:#15664e">已完成</div>
+        <div class="ct">产物 0/2</div>
+
+      </div>
+      <div class="stop">
+        <div class="dot" style="border-color:#15664e;color:#15664e">🧱</div>
+        <div class="no">04</div>
+        <div class="nm">夯实地基</div>
+        <div class="st" style="color:#15664e">已完成</div>
+        <div class="ct">产物 0/2</div>
+
+      </div>
+      <div class="stop cur">
+        <div class="dot" style="border-color:#a87518;color:#a87518">⚙️</div>
+        <div class="no">05</div>
+        <div class="nm">逐系统建造</div>
+        <div class="st" style="color:#a87518">进行中</div>
+        <div class="ct">产物 0/2</div>
+        <div class="here">← 你在这</div>
+      </div>
+      <div class="stop">
+        <div class="dot" style="border-color:#8a97a5;color:#8a97a5">🔬</div>
+        <div class="no">06</div>
+        <div class="nm">做实验证</div>
+        <div class="st" style="color:#8a97a5">未开始</div>
+        <div class="ct">产物 0/3</div>
+
+      </div>
+      <div class="stop">
+        <div class="dot" style="border-color:#8a97a5;color:#8a97a5">🚀</div>
+        <div class="no">07</div>
+        <div class="nm">交付复盘</div>
+        <div class="st" style="color:#8a97a5">未开始</div>
+        <div class="ct">产物 0/2</div>
+
+      </div></div>
+
+  <h2>开发任务清单 · 逐系统（05 逐系统建造）</h2>
+  <p class="lede">页面契约确定后按系统铺开：每个系统一套标准开发任务，状态随提交更新。</p>
+  <div class="wlwrap"><table class="wl"><thead><tr><th>系统</th><th title="表结构 + Flyway 迁移">数据库设计</th><th title="据页面契约定 Controller 接口">API 契约设计</th><th title="实体/Service/Controller 落地 + 编译门">后端开发</th><th title="路由 + 页面 + 下拉选择 + build 门">前端开发</th><th title="角色定义 + 菜单/数据范围">角色开发</th><th title="接口/按钮/数据级鉴权">权限开发</th><th title="真跑冒烟 + 探针可见正确性">测试</th></tr></thead><tbody><tr><td class="wlsys"><b>赛事系统</b> <span class="wlprog">3/7</span></td><td><span class="wlcell" style="color:#15664e;border-color:#15664e">已完成</span></td><td><span class="wlcell" style="color:#15664e;border-color:#15664e">已完成</span></td><td><span class="wlcell" style="color:#15664e;border-color:#15664e">已完成</span></td><td><span class="wlcell" style="color:#a87518;border-color:#a87518">进行中</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">待开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td></tr><tr><td class="wlsys"><b>场馆系统</b> <span class="wlprog">1/7</span></td><td><span class="wlcell" style="color:#15664e;border-color:#15664e">已完成</span></td><td><span class="wlcell" style="color:#a87518;border-color:#a87518">进行中</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">待开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td></tr><tr><td class="wlsys"><b>协会系统</b> <span class="wlprog">0/7</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">待开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td><td><span class="wlcell" style="color:#8a97a5;border-color:#8a97a5">未开始</span></td></tr></tbody></table></div>
+  <h2>产出物总账 · 是什么 / 在哪 / 磁盘状态</h2>
+  <table class="acct">
+    <thead><tr><th>阶段</th><th>产出物</th><th>是什么</th><th>期望路径</th><th>磁盘</th></tr></thead>
+    <tbody>
+      <tr>
+        <td rowspan="1"><b>01 读懂需求</b><div class="ins"><span class="inslab">输入真源</span><div class="inrow">需求文档<span class="path"> docs/需求文档.pdf</span></div></div></td>
+        <td>需求骨架</td>
+        <td>确认过的系统清单/菜单树/状态机/实体矩阵</td>
+        <td class="path">docs/product/xz/spec.md</td>
+        <td><span style="color:#aa4638;font-weight:700">✗ 已登记但缺失</span></td>
+      </tr>
+      <tr>
+        <td rowspan="6"><b>02 逆向设计</b></td>
+        <td>宏观架构</td>
+        <td>系统拓扑/耦合矩阵/数据血缘/RBAC/API 契约目录</td>
+        <td class="path">docs/architecture/xz_arch.json</td>
+        <td><span style="color:#aa4638;font-weight:700">✗ 已登记但缺失</span></td>
+      </tr>
+      <tr>
+
+        <td>脏数据探针</td>
+        <td>五段式生命周期剧本 + 跨系统穿透引用</td>
+        <td class="path">docs/probes/xz_probe.json</td>
+        <td><span style="color:#aa4638;font-weight:700">✗ 已登记但缺失</span></td>
+      </tr>
+      <tr>
+
+        <td>覆盖矩阵</td>
+        <td>功能点树全量逐条 + 归口登记，后续 DoD 的追踪基准</td>
+        <td class="path">docs/product/xz/coverage-matrix.md</td>
+        <td><span style="color:#aa4638;font-weight:700">✗ 已登记但缺失</span></td>
+      </tr>
+      <tr>
+
+        <td>数据模型 <span class="opt">(可选)</span></td>
+        <td>全量实体字段/关系</td>
+        <td class="path">docs/product/&lt;sys&gt;/data-model.md</td>
+        <td><span style="color:#8a97a5">— 未产出</span></td>
+      </tr>
+      <tr>
+
+        <td>歧义熔断账 <span class="opt">(可选)</span></td>
+        <td>[ASSUMPTION] 挂账，等业务拍板</td>
+        <td class="path">docs/product/AMBIGUITIES-INDEX.md</td>
+        <td><span style="color:#8a97a5">— 未产出</span></td>
+      </tr>
+      <tr>
+
+        <td>产物可视化 <span class="opt">(可选)</span></td>
+        <td>自包含 HTML，内嵌全部产物（架构/契约/数据模型/状态机/探针/API），双击即开；由 .agent/scripts/build_viewer.mjs 自动发现 docs/ 产物生成，产物变更后重跑刷新</td>
+        <td class="path">docs/viewer.html</td>
+        <td><span style="color:#8a97a5">— 未产出</span></td>
+      </tr>
+      <tr>
+        <td rowspan="2"><b>03 页面契约·约束优先</b></td>
+        <td>页面蓝图</td>
+        <td>页面级原子契约（data/action/input 三视图，按 menu_group 分组）</td>
+        <td class="path">docs/blueprints/xz_blueprint.json</td>
+        <td><span style="color:#aa4638;font-weight:700">✗ 已登记但缺失</span></td>
+      </tr>
+      <tr>
+
+        <td>契约渲染页</td>
+        <td>blueprint_render.html 渲染的分级可视化开发蓝图，供人工确认查看</td>
+        <td class="path">docs/blueprints/xz_blueprint.html</td>
+        <td><span style="color:#aa4638;font-weight:700">✗ 已登记但缺失</span></td>
+      </tr>
+      <tr>
+        <td rowspan="2"><b>04 夯实地基</b></td>
+        <td>平台内核模块</td>
+        <td>platform.* 内核模块（auth/approval/message/mid/region/dict/menu/identity…）</td>
+        <td class="path">src/main/java/com/xizang/fitness/platform</td>
+        <td><span style="color:#8a97a5">— 未产出</span></td>
+      </tr>
+      <tr>
+
+        <td>数据库迁移</td>
+        <td>Flyway V*.sql 迁移脚本</td>
+        <td class="path">src/main/resources/db/migration</td>
+        <td><span style="color:#8a97a5">— 未产出</span></td>
+      </tr>
+      <tr>
+        <td rowspan="2"><b>05 逐系统建造</b></td>
+        <td>后端业务模块</td>
+        <td>modules.* 业务模块（迁移+实体+Service+Controller）</td>
+        <td class="path">src/main/java/com/xizang/fitness/modules/user</td>
+        <td><span style="color:#aa4638;font-weight:700">✗ 已登记但缺失</span></td>
+      </tr>
+      <tr>
+
+        <td>前端页面</td>
+        <td>路由 + 下拉选择页面</td>
+        <td class="path">apps/web/src/views/user</td>
+        <td><span style="color:#aa4638;font-weight:700">✗ 已登记但缺失</span></td>
+      </tr>
+      <tr>
+        <td rowspan="3"><b>06 做实验证</b></td>
+        <td>探针脚本</td>
+        <td>契约/浏览器/流程三层探针</td>
+        <td class="path">harness</td>
+        <td><span style="color:#8a97a5">— 未产出</span></td>
+      </tr>
+      <tr>
+
+        <td>合并报告</td>
+        <td>可交互报告，每步标 PASS/GAP/MISMATCH/ERROR + 截图 + 修复意见</td>
+        <td class="path">harness/reports/flow-report.html</td>
+        <td><span style="color:#8a97a5">— 未产出</span></td>
+      </tr>
+      <tr>
+
+        <td>机器真值 <span class="opt">(可选)</span></td>
+        <td>权威数据源 JSON（真跑成啥）</td>
+        <td class="path">harness/reports/systems/&lt;sys&gt;.json</td>
+        <td><span style="color:#8a97a5">— 未产出</span></td>
+      </tr>
+      <tr>
+        <td rowspan="2"><b>07 交付复盘</b></td>
+        <td>缺口盘点</td>
+        <td>GROUNDING-GAPCHECK：应然 vs 现状逐条对齐</td>
+        <td class="path">docs/GROUNDING-GAPCHECK.md</td>
+        <td><span style="color:#8a97a5">— 未产出</span></td>
+      </tr>
+      <tr>
+
+        <td>进度台账 <span class="opt">(可选)</span></td>
+        <td>BUILD-LEDGER（真值以 systems/*.json 为准）</td>
+        <td class="path">docs/BUILD-LEDGER.md</td>
+        <td><span style="color:#8a97a5">— 未产出</span></td>
+      </tr></tbody>
+  </table>
+  <h2>skill 归属带 · 每阶段该调哪个 skill（是否已装）</h2>
+  <div class="band"><div class="bandrow"><span class="bp">01 读懂需求</span><span class="bs"><span class="skpill" style="border-color:#15664e;color:#15664e">kando-macro-architecture-extractor ✓已装</span></span></div><div class="bandrow"><span class="bp">02 逆向设计</span><span class="bs"><span class="skpill" style="border-color:#15664e;color:#15664e">kando-macro-architecture-extractor ✓已装</span> <span class="skpill" style="border-color:#15664e;color:#15664e">kando-product-spec-generator ✓已装</span> <span class="skpill" style="border-color:#15664e;color:#15664e">dirty-data-probe ✓已装</span></span></div><div class="bandrow"><span class="bp">03 页面契约·约束优先</span><span class="bs"><span class="skpill" style="border-color:#15664e;color:#15664e">anti-omission-dev-blueprint ✓已装</span></span></div><div class="bandrow"><span class="bp">04 夯实地基</span><span class="bs"><span class="skpill" style="border-color:#15664e;color:#15664e">kando-system-build ✓已装</span> <span class="skpill" style="border-color:#aa4638;color:#aa4638">agent-skills:code-reviewer ✗未装</span></span></div><div class="bandrow"><span class="bp">05 逐系统建造</span><span class="bs"><span class="skpill" style="border-color:#15664e;color:#15664e">kando-system-build ✓已装</span></span></div><div class="bandrow"><span class="bp">06 做实验证</span><span class="bs"><span class="skpill" style="border-color:#15664e;color:#15664e">flow-probe ✓已装</span> <span class="skpill" style="border-color:#15664e;color:#15664e">dirty-data-probe ✓已装</span></span></div><div class="bandrow"><span class="bp">07 交付复盘</span><span class="bs"><span class="skpill" style="border-color:#15664e;color:#15664e">kando-gap-fill-driver ✓已装</span></span></div></div>
+  <h2>贯穿纪律</h2>
+  <div class="rails">
+    <div class="rail"><h3>记得住 · 任务记忆</h3><p>防遗忘/防中断；最终事实=代码/Git/测试/真实系统状态，不是聊天记录</p></div>
+    <div class="rail"><h3>做得实 · DoD 纪律</h3><p>防假绿；一个功能完成必须端到端真串通 + 真实种子数据 + 探针可见正确性 + 无假绿</p></div></div></div>
+  <div id="mem" class="panel" hidden>
+  <div class="memstate ok">✅ 记忆在被调用（journal 有事件在累积，机制真在生效）</div>
+  <h2>记忆概览 · 记得住机制存了些什么</h2>
+
+  <div class="statgrid">
+    <div class="stat"><b>5</b><span>任务</span></div>
+    <div class="stat"><b>25</b><span>journal 事件</span></div>
+    <div class="stat"><b>0</b><span>决策</span></div>
+    <div class="stat"><b>0</b><span>证据</span></div>
+    <div class="stat"><b>0</b><span>checkpoint</span></div>
+    <div class="stat"><b>0</b><span>中断步骤</span></div>
+    <div class="stat"><b>0</b><span>失败步骤</span></div>
+    <div class="stat"><b>2026-08-27 13:43:56</b><span>最后写入</span></div>
+  </div>
+  <p class="span">记忆覆盖：2026-08-24 02:46:46 → 2026-08-27 13:43:56</p>
+  <h2>记了些什么 · 事件类型分布</h2>
+  <div class="pills"><span class="evpill"><b>10</b> 提交步骤</span><span class="evpill"><b>5</b> 建任务</span><span class="evpill"><b>5</b> 开步骤</span><span class="evpill"><b>5</b> 记决策</span></div>
+  <h2>任务快照 · 每个任务记到哪了</h2>
+  <div class="tcards">
+    <div class="tcard">
+      <div class="tc-h"><span class="badge" style="color:#a87518;border-color:#a87518">进行中</span> <b>phase-build-systems</b></div>
+      <div class="tc-o">[05 逐系统建造] 用户/机构系统全栈闭环：物化spec→后端→前端→冒烟</div>
+      <div class="tc-m">阶段 <b>逐系统建造</b> · v6 · DoD 2/4</div>
+      <div class="tc-plan"><div class="plan-h">阶段验收 DoD · 2/4</div><div class="planrow done"><span class="ck">✓</span>数据库迁移 V1__user.sql 建表（Flyway 可跑）</div><div class="planrow done"><span class="ck">✓</span>用户/角色模块 API（Controller）落地 + 编译门过</div><div class="planrow"><span class="ck">○</span>前端页面：用户列表 + 机构下拉选择（严禁手填 ID）</div><div class="planrow"><span class="ck">○</span>真跑冒烟：真登录能看到种子数据</div></div>
+      <div class="tc-open">▸ 进行中步骤 step-fe — 接入机构下拉选择器（值=机构ID/显示=双语名）（未提交）</div>
+
+      <div class="tc-r">最近完成：用户模块 Controller/Service 落地，编译门过 ／ 建 V1__user.sql 迁移并跑通</div>
+      <div class="tc-ref">依据：<span class="reflab">页面契约</span> <a href="docs/blueprints/xz_blueprint.html">docs/blueprints/xz_blueprint.html</a> · <span class="reflab">架构</span> <a href="docs/architecture/xz_arch.json">docs/architecture/xz_arch.json</a></div>
+      <div class="tc-f">下一步：把机构选择器换成下拉（值=机构ID、显示=双语名），跑真跑冒烟 · 更新 2026-08-27 13:43:56</div>
+    </div>
+    <div class="tcard">
+      <div class="tc-h"><span class="badge" style="color:#15664e;border-color:#15664e">已完成</span> <b>phase-foundation</b></div>
+      <div class="tc-o">[04 夯实地基] 先把所有系统都要用的公共内核建好</div>
+      <div class="tc-m">阶段 <b>夯实地基</b> · v6 · DoD 1/1</div>
+      <div class="tc-plan"><div class="plan-h">阶段验收 DoD · 1/1</div><div class="planrow done"><span class="ck">✓</span>内核模块编译绿 + 数据库迁移可跑</div></div>
+
+
+      <div class="tc-r">最近完成：foundation 阶段产物已确认签核</div>
+      <div class="tc-ref">依据：src/main/java/com/xizang/fitness/platform · src/main/resources/db/migration</div>
+      <div class="tc-f">下一步：产出「平台内核模块」→ src/main/java/com/xizang/fitness/platform · 更新 2026-08-27 13:43:56</div>
+    </div>
+    <div class="tcard">
+      <div class="tc-h"><span class="badge" style="color:#15664e;border-color:#15664e">已完成</span> <b>phase-page-contract</b></div>
+      <div class="tc-o">[03 页面契约·约束优先] 开发前把每页字段/接口/交互定死并逐页确认签核</div>
+      <div class="tc-m">阶段 <b>页面契约·约束优先</b> · v6 · DoD 1/1</div>
+      <div class="tc-plan"><div class="plan-h">阶段验收 DoD · 1/1</div><div class="planrow done"><span class="ck">✓</span>页面契约逐页业务确认签核</div></div>
+
+
+      <div class="tc-r">最近完成：page-contract 阶段产物已确认签核</div>
+      <div class="tc-ref">依据：docs/blueprints/&lt;sys&gt;_blueprint.json · docs/blueprints/&lt;sys&gt;_blueprint.html</div>
+      <div class="tc-f">下一步：产出「页面蓝图」→ docs/blueprints/&lt;sys&gt;_blueprint.json · 更新 2026-08-27 13:43:56</div>
+    </div>
+    <div class="tcard">
+      <div class="tc-h"><span class="badge" style="color:#15664e;border-color:#15664e">已完成</span> <b>phase-reverse-design</b></div>
+      <div class="tc-o">[02 逆向设计] 把需求榨干成架构 + 验收剧本（页面契约独立为下一阶段）</div>
+      <div class="tc-m">阶段 <b>逆向设计</b> · v6 · DoD 2/2</div>
+      <div class="tc-plan"><div class="plan-h">阶段验收 DoD · 2/2</div><div class="planrow done"><span class="ck">✓</span>六类产品交付物齐备</div><div class="planrow done"><span class="ck">✓</span>覆盖矩阵逐条登记归口（不假装全做）</div></div>
+
+
+      <div class="tc-r">最近完成：reverse-design 阶段产物已确认签核</div>
+      <div class="tc-ref">依据：docs/architecture/&lt;sys&gt;_arch.json · docs/probes/&lt;sys&gt;_probe.json · docs/product/&lt;sys&gt;/coverage-matrix.md · docs/product/&lt;sys&gt;/data-model.md · docs/product/AMBIGUITIES-INDEX.md</div>
+      <div class="tc-f">下一步：产出「宏观架构」→ docs/architecture/&lt;sys&gt;_arch.json · 更新 2026-08-27 13:43:56</div>
+    </div>
+    <div class="tcard">
+      <div class="tc-h"><span class="badge" style="color:#15664e;border-color:#15664e">已完成</span> <b>phase-understand</b></div>
+      <div class="tc-o">[01 读懂需求] 把 PDF 翻译成机器可追踪的真源</div>
+      <div class="tc-m">阶段 <b>读懂需求</b> · v6 · DoD 1/1</div>
+      <div class="tc-plan"><div class="plan-h">阶段验收 DoD · 1/1</div><div class="planrow done"><span class="ck">✓</span>系统清单/菜单树/状态机/实体矩阵已业务确认</div></div>
+
+
+      <div class="tc-r">最近完成：understand 阶段产物已确认签核</div>
+      <div class="tc-ref">依据：<span class="reflab">输入</span> docs/需求文档.pdf · docs/product/&lt;sys&gt;/spec.md</div>
+      <div class="tc-f">下一步：先读真源：需求文档(docs/需求文档.pdf)；产出「需求骨架」→ docs/product/&lt;sys&gt;/spec.md · 更新 2026-08-27 13:43:56</div>
+    </div></div>
+  <h2>关键决策 · 为什么这么做</h2>
+  <p class="dim">（暂无决策记录 —— 用 <code>decision add</code> 记「为什么这么选」）</p>
+  <h2>异常 · 中断 / 失败步骤</h2>
+  <p class="okc">✓ 无中断、无失败步骤 —— 没有悬空的活。</p>
+  <h2>最近调用 · 时间线</h2>
+  <table class="memtab"><thead><tr><th>时间</th><th>类型</th><th>内容 · 结果</th><th>任务</th></tr></thead><tbody>
+        <tr><td class="path">#25 13:43:56</td><td>记决策</td><td>机构引用一律下拉 — 严禁手填 ID，杜绝孤儿数据</td><td class="path">phase-build-systems</td></tr>
+        <tr><td class="path">#24 13:43:56</td><td>开步骤</td><td>意图：接入机构下拉选择器</td><td class="path">phase-build-systems</td></tr>
+        <tr><td class="path">#23 13:43:56</td><td>提交步骤</td><td>用户模块 API 落地，编译门过</td><td class="path">phase-build-systems</td></tr>
+        <tr><td class="path">#22 13:43:56</td><td>提交步骤</td><td>建 V1__user.sql 迁移并跑通</td><td class="path">phase-build-systems</td></tr>
+        <tr><td class="path">#21 13:43:56</td><td>建任务</td><td>目标：用户/机构系统全栈闭环</td><td class="path">phase-build-systems</td></tr>
+        <tr><td class="path">#20 13:42:15</td><td>记决策</td><td>机构引用一律下拉 — 严禁手填 ID，杜绝孤儿数据</td><td class="path">phase-build-systems</td></tr>
+        <tr><td class="path">#19 13:42:15</td><td>开步骤</td><td>意图：接入机构下拉选择器</td><td class="path">phase-build-systems</td></tr>
+        <tr><td class="path">#18 13:42:15</td><td>提交步骤</td><td>用户模块 API 落地，编译门过</td><td class="path">phase-build-systems</td></tr>
+        <tr><td class="path">#17 13:42:15</td><td>提交步骤</td><td>建 V1__user.sql 迁移并跑通</td><td class="path">phase-build-systems</td></tr>
+        <tr><td class="path">#16 13:42:15</td><td>建任务</td><td>目标：用户/机构系统全栈闭环</td><td class="path">phase-build-systems</td></tr>
+        <tr><td class="path">#15 07:19:49</td><td>记决策</td><td>机构引用一律下拉 — 严禁手填 ID，杜绝孤儿数据</td><td class="path">phase-build-systems</td></tr>
+        <tr><td class="path">#14 07:19:49</td><td>开步骤</td><td>意图：接入机构下拉选择器</td><td class="path">phase-build-systems</td></tr></tbody></table></div>
+  <footer>数据源：.agent 真实状态（产物磁盘回读 + journal，非聊天记录） · 生成时间 2026-08-24T11:05:00+08:00</footer>
+</div>
+<script>
+  document.querySelectorAll('.tab').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on')});
+      document.querySelectorAll('.panel').forEach(function(x){x.hidden=true});
+      b.classList.add('on');
+      var el=document.getElementById(b.dataset.t); if(el){el.hidden=false;}
+    });
+  });
+</script>
+</body></html>

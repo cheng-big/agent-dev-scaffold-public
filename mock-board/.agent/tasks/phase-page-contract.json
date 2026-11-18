@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "task_id": "phase-page-contract",
+  "objective": "[03 页面契约·约束优先] 开发前把每页字段/接口/交互定死并逐页确认签核",
+  "status": "completed",
+  "phase": "页面契约·约束优先",
+  "current_focus": "",
+  "next_action": "产出「页面蓝图」→ docs/blueprints/<sys>_blueprint.json",
+  "blockers": [],
+  "critical_constraints": [
+    "逐页 data/action/input 三视图齐全，不闭环/矛盾/缺失一律进 AMBIGUITIES-INDEX 熔断",
+    "引用别的实体一律下拉选择（值=业务主键、显示=双语名），契约里严禁手填 ID"
+  ],
+  "recent_completed": [
+    {
+      "at": "2026-08-24T09:00:00+08:00",
+      "summary": "page-contract 阶段产物已确认签核",
+      "step_id": "step-1",
+      "evidence": []
+    }
+  ],
+  "definition_of_done": [
+    {
+      "text": "页面契约逐页业务确认签核",
+      "met": true,
+      "evidence": []
+    }
+  ],
+  "references": [
+    "docs/blueprints/<sys>_blueprint.json",
+    "docs/blueprints/<sys>_blueprint.html"
+  ],
+  "open_step": null,
+  "version": 5,
+  "created_at": "2026-08-24T02:46:45.976Z",
+  "updated_at": "2026-08-27T13:42:15.761Z"
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task_id": "phase-understand",
+  "objective": "[01 读懂需求] 把 PDF 翻译成机器可追踪的真源",
+  "status": "completed",
+  "phase": "读懂需求",
+  "current_focus": "",
+  "next_action": "先读真源：需求文档(docs/需求文档.pdf)；产出「需求骨架」→ docs/product/<sys>/spec.md",
+  "blockers": [],
+  "critical_constraints": [
+    "grounding 必须中立，读它到底定义了什么，禁止预贴标签"
+  ],
+  "recent_completed": [
+    {
+      "at": "2026-08-24T09:00:00+08:00",
+      "summary": "understand 阶段产物已确认签核",
+      "step_id": "step-1",
+      "evidence": []
+    }
+  ],
+  "definition_of_done": [
+    {
+      "text": "系统清单/菜单树/状态机/实体矩阵已业务确认",
+      "met": true,
+      "evidence": []
+    }
+  ],
+  "references": [
+    "输入:docs/需求文档.pdf",
+    "docs/product/<sys>/spec.md"
+  ],
+  "open_step": null,
+  "version": 5,
+  "created_at": "2026-08-24T02:46:45.958Z",
+  "updated_at": "2026-08-27T13:42:15.753Z"
+}

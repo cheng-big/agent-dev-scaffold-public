@@ -1,0 +1,191 @@
+{
+  "process_version": 1,
+  "current_phase": "build-systems",
+  "phase_tasks": {
+    "understand": "phase-understand",
+    "reverse-design": "phase-reverse-design",
+    "page-contract": "phase-page-contract",
+    "foundation": "phase-foundation",
+    "build-systems": "phase-build-systems"
+  },
+  "artifacts": [
+    {
+      "phase_id": "understand",
+      "key": "spec",
+      "name": "需求骨架",
+      "path": "docs/product/xz/spec.md",
+      "status": "done",
+      "registered_at": "2026-08-24T09:00:00+08:00"
+    },
+    {
+      "phase_id": "reverse-design",
+      "key": "arch",
+      "name": "宏观架构",
+      "path": "docs/architecture/xz_arch.json",
+      "status": "done",
+      "registered_at": "2026-08-24T09:00:00+08:00"
+    },
+    {
+      "phase_id": "reverse-design",
+      "key": "probe",
+      "name": "脏数据探针",
+      "path": "docs/probes/xz_probe.json",
+      "status": "done",
+      "registered_at": "2026-08-24T09:00:00+08:00"
+    },
+    {
+      "phase_id": "reverse-design",
+      "key": "coverage-matrix",
+      "name": "覆盖矩阵",
+      "path": "docs/product/xz/coverage-matrix.md",
+      "status": "done",
+      "registered_at": "2026-08-24T09:00:00+08:00"
+    },
+    {
+      "phase_id": "page-contract",
+      "key": "blueprint",
+      "name": "页面蓝图",
+      "path": "docs/blueprints/xz_blueprint.json",
+      "status": "done",
+      "registered_at": "2026-08-24T09:00:00+08:00"
+    },
+    {
+      "phase_id": "page-contract",
+      "key": "blueprint-render",
+      "name": "契约渲染页",
+      "path": "docs/blueprints/xz_blueprint.html",
+      "status": "done",
+      "registered_at": "2026-08-24T09:00:00+08:00"
+    },
+    {
+      "phase_id": "build-systems",
+      "key": "backend-modules",
+      "name": "后端业务模块",
+      "path": "src/main/java/com/xizang/fitness/modules/user",
+      "status": "done",
+      "registered_at": "2026-08-24T09:00:00+08:00"
+    },
+    {
+      "phase_id": "build-systems",
+      "key": "frontend-views",
+      "name": "前端页面",
+      "path": "apps/web/src/views/user",
+      "status": "done",
+      "registered_at": "2026-08-24T09:00:00+08:00"
+    }
+  ],
+  "updated_at": "2026-08-27T13:42:15.775Z",
+  "systems": [
+    {
+      "key": "match",
+      "name": "赛事系统",
+      "tasks": [
+        {
+          "key": "db",
+          "status": "completed",
+          "updated_at": "2026-08-27T13:42:15.774Z"
+        },
+        {
+          "key": "api",
+          "status": "completed",
+          "updated_at": "2026-08-27T13:42:15.774Z"
+        },
+        {
+          "key": "backend",
+          "status": "completed",
+          "updated_at": "2026-08-27T13:42:15.774Z"
+        },
+        {
+          "key": "frontend",
+          "status": "in_progress",
+          "updated_at": "2026-08-27T13:42:15.774Z"
+        },
+        {
+          "key": "role",
+          "status": "planned",
+          "updated_at": "2026-08-27T13:42:15.774Z"
+        },
+        {
+          "key": "perm",
+          "status": "not_started"
+        },
+        {
+          "key": "test",
+          "status": "not_started"
+        }
+      ]
+    },
+    {
+      "key": "venue",
+      "name": "场馆系统",
+      "tasks": [
+        {
+          "key": "db",
+          "status": "completed",
+          "updated_at": "2026-08-27T13:42:15.774Z"
+        },
+        {
+          "key": "api",
+          "status": "in_progress",
+          "updated_at": "2026-08-27T13:42:15.774Z"
+        },
+        {
+          "key": "backend",
+          "status": "planned",
+          "updated_at": "2026-08-27T13:42:15.774Z"
+        },
+        {
+          "key": "frontend",
+          "status": "not_started"
+        },
+        {
+          "key": "role",
+          "status": "not_started"
+        },
+        {
+          "key": "perm",
+          "status": "not_started"
+        },
+        {
+          "key": "test",
+          "status": "not_started"
+        }
+      ]
+    },
+    {
+      "key": "assoc",
+      "name": "协会系统",
+      "tasks": [
+        {
+          "key": "db",
+          "status": "planned",
+          "updated_at": "2026-08-27T13:42:15.774Z"
+        },
+        {
+          "key": "api",
+          "status": "not_started"
+        },
+        {
+          "key": "backend",
+          "status": "not_started"
+        },
+        {
+          "key": "frontend",
+          "status": "not_started"
+        },
+        {
+          "key": "role",
+          "status": "not_started"
+        },
+        {
+          "key": "perm",
+          "status": "not_started"
+        },
+        {
+          "key": "test",
+          "status": "not_started"
+        }
+      ]
+    }
+  ]
+}

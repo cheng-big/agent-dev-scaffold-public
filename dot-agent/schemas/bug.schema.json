@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "bug.schema.json",
+  "title": "Bug 台账条目",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["id", "title"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1, "description": "唯一编号" },
+    "title": { "type": "string", "minLength": 1, "description": "现象/标题" },
+    "repro": { "type": "string", "description": "复现步骤" },
+    "expected": { "type": "string", "description": "期望行为" },
+    "actual": { "type": "string", "description": "实际行为" },
+    "status": { "type": "string", "description": "飞书源表当前状态（兼容旧台账字段）" },
+    "source_key": { "type": "string", "minLength": 1, "description": "源系统内稳定唯一键" },
+    "source_row": { "type": "integer", "minimum": 1, "description": "源表一基行号" },
+    "source_url": { "type": "string", "description": "源系统地址" },
+    "source_status": { "type": "string", "description": "飞书源表当前状态" },
+    "source_presence": { "type": "string", "enum": ["present", "missing"], "description": "最近同步是否仍存在于源系统" },
+    "in_scope": { "type": "boolean", "description": "是否属于本轮状态过滤范围" },
+    "verification_status": { "type": "string", "description": "本轮验证状态，如已验证、部分验证、待真机验收" },
+    "verification_scope": { "type": "string", "description": "本轮验证环境与边界" },
+    "verified_at": { "type": "string", "description": "最近验证日期或时间" },
+    "verification_note": { "type": "string", "description": "最近验证结论摘要" },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^ev:[A-Za-z0-9_-]+$" },
+      "description": "关联的 harness 证据编号"
+    },
+    "severity": { "type": "string", "description": "严重级/优先级（如 P0/P1/P2）" },
+    "platform": { "type": "string", "description": "涉及端（web/小程序/云函数）" },
+    "raw": { "type": "object", "description": "未识别列的原文留存，AI 再补" }
+  }
+}

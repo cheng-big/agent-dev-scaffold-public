@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "task_id": "phase-build-systems",
+  "objective": "[05 逐系统建造] 用户/机构系统全栈闭环：物化spec→后端→前端→冒烟",
+  "status": "in_progress",
+  "phase": "逐系统建造",
+  "current_focus": "前端页面接入机构下拉选择器",
+  "next_action": "把机构选择器换成下拉（值=机构ID、显示=双语名），跑真跑冒烟",
+  "blockers": [],
+  "critical_constraints": [
+    "前端引用别的实体一律下拉选择（值=业务主键、显示=双语名），严禁手填 ID",
+    "每步卡质量门，不带病往下走"
+  ],
+  "recent_completed": [
+    {
+      "at": "2026-08-24T10:10:00+08:00",
+      "summary": "建 V1__user.sql 迁移并跑通",
+      "step_id": "step-mig",
+      "evidence": []
+    },
+    {
+      "at": "2026-08-24T10:40:00+08:00",
+      "summary": "用户模块 Controller/Service 落地，编译门过",
+      "step_id": "step-api",
+      "evidence": []
+    }
+  ],
+  "definition_of_done": [
+    {
+      "text": "数据库迁移 V1__user.sql 建表（Flyway 可跑）",
+      "met": true,
+      "evidence": []
+    },
+    {
+      "text": "用户/角色模块 API（Controller）落地 + 编译门过",
+      "met": true,
+      "evidence": []
+    },
+    {
+      "text": "前端页面：用户列表 + 机构下拉选择（严禁手填 ID）",
+      "met": false,
+      "evidence": []
+    },
+    {
+      "text": "真跑冒烟：真登录能看到种子数据",
+      "met": false,
+      "evidence": []
+    }
+  ],
+  "references": [
+    "页面契约:docs/blueprints/xz_blueprint.html",
+    "架构:docs/architecture/xz_arch.json"
+  ],
+  "open_step": {
+    "step_id": "step-fe",
+    "intent": "接入机构下拉选择器（值=机构ID/显示=双语名）",
+    "attempt": 1,
+    "idempotency_key": "k-fe-1",
+    "started_at": "2026-08-24T11:00:00+08:00",
+    "effect": "none",
+    "targets": []
+  },
+  "version": 5,
+  "created_at": "2026-08-24T02:46:45.994Z",
+  "updated_at": "2026-08-27T13:42:15.770Z"
+}

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>企业级中后台 UI Kit · 组件规范演示</title>
+
+  <!-- Zero-dependency：Tailwind Play CDN，双击即开，无需构建 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // 与 ui-kit/tailwind.config.js 同步的一份 config（Play CDN 内联版）
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            canvas: { DEFAULT: '#F8FAFC', dark: '#0B0F19' },
+            surface: { DEFAULT: '#FFFFFF', dark: '#0F172A' },
+            subtle: { DEFAULT: '#F1F5F9', dark: '#1E293B' },
+            brand: { DEFAULT: '#2563EB', hover: '#1D4ED8', light: '#EFF6FF' },
+          },
+          fontFamily: {
+            sans: ['ui-sans-serif', 'system-ui', '-apple-system', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- 组件语义类：用 @apply 组合 Tailwind 原子类，杜绝冗余内联 style（规范 §5.1） -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      /* 所有可交互元素统一挂载的键盘无障碍焦点环（规范 §4.1 / §1.4） */
+      .focus-ring {
+        @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+               focus-visible:ring-offset-2 focus-visible:ring-offset-canvas
+               dark:focus-visible:ring-offset-canvas-dark;
+      }
+    }
+    @layer components {
+      /* —— Button 基座 + 4 变体（规范 §4.1）—— */
+      .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+               transition-colors disabled:pointer-events-none disabled:opacity-60;
+      }
+      .btn-primary   { @apply bg-brand text-white hover:bg-brand-hover active:bg-brand-hover; }
+      .btn-secondary { @apply bg-surface text-slate-700 border border-slate-200 hover:bg-subtle
+                              dark:bg-slate-900 dark:text-slate-200 dark:border-slate-800 dark:hover:bg-slate-800; }
+      .btn-ghost     { @apply bg-transparent text-slate-600 hover:bg-subtle
+                              dark:text-slate-300 dark:hover:bg-slate-800; }
+      .btn-danger    { @apply bg-rose-600 text-white hover:bg-rose-700; }
+
+      /* —— Badge / Tag：浅底 + 深字 + 弱描边（规范 §2.2）—— */
+      .badge { @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium; }
+      .badge-success { @apply bg-emerald-50 text-emerald-700 border-emerald-200/60
+                              dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20; }
+      .badge-warning { @apply bg-amber-50 text-amber-700 border-amber-200/60
+                              dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20; }
+      .badge-danger  { @apply bg-rose-50 text-rose-700 border-rose-200/60
+                              dark:bg-rose-500/10 dark:text-rose-300 dark:border-rose-500/20; }
+      .badge-info    { @apply bg-blue-50 text-blue-700 border-blue-200/60
+                              dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20; }
+
+      /* 卡片容器 */
+      .card { @apply rounded-xl border border-slate-200 bg-surface dark:border-slate-800 dark:bg-surface-dark; }
+      /* 侧栏导航项 */
+      .nav-item { @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600
+                        hover:bg-subtle hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100; }
+      .nav-item-active { @apply bg-brand-light text-brand dark:bg-brand/15 dark:text-blue-300; }
+    }
+  </style>
+</head>
+
+<!-- 视口锁定：最外层 h-screen overflow-hidden flex，滚动仅发生在 main 内部（规范 §3.1） -->
+<body class="h-full overflow-hidden flex bg-canvas text-slate-700 font-sans antialiased dark:bg-canvas-dark dark:text-slate-300">
+
+  <!-- ==================== 侧边栏 Sidebar（可折叠，常驻）==================== -->
+  <aside id="sidebar" class="flex w-64 shrink-0 flex-col border-r border-slate-200 bg-surface transition-all duration-200 dark:border-slate-800 dark:bg-surface-dark">
+    <!-- 顶部 Logo / 产品名（h-16 居中对齐） -->
+    <div class="flex h-16 items-center gap-2.5 border-b border-slate-200 px-4 dark:border-slate-800">
+      <div class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-white font-bold">A</div>
+      <span data-collapse-hide class="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">Admin Scaffold</span>
+    </div>
+
+    <!-- 导航分组菜单 -->
+    <nav class="flex-1 space-y-6 overflow-y-auto px-3 py-4">
+      <div class="space-y-1">
+        <p data-collapse-hide class="px-3 pb-1 text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">概览</p>
+        <a href="#" class="nav-item nav-item-active focus-ring">
+          <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
+          <span data-collapse-hide>仪表盘</span>
+        </a>
+        <a href="#" class="nav-item focus-ring">
+          <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5"/></svg>
+          <span data-collapse-hide>数据分析</span>
+        </a>
+      </div>
+      <div class="space-y-1">
+        <p data-collapse-hide class="px-3 pb-1 text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">资源</p>
+        <a href="#" class="nav-item focus-ring">
+          <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75"/></svg>
+          <span data-collapse-hide>实例列表</span>
+        </a>
+        <a href="#" class="nav-item focus-ring">
+          <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span data-collapse-hide>设置</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- 底部账号 / 工作空间切换器 -->
+    <div class="border-t border-slate-200 p-3 dark:border-slate-800">
+      <button class="nav-item w-full focus-ring">
+        <img class="h-7 w-7 shrink-0 rounded-full" src="https://i.pravatar.cc/64?img=13" alt="用户头像" />
+        <span data-collapse-hide class="flex-1 text-left">
+          <span class="block text-sm font-medium text-slate-900 dark:text-slate-100">陈根</span>
+          <span class="block text-xs text-slate-400 dark:text-slate-500">默认工作空间</span>
+        </span>
+        <svg data-collapse-hide class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ==================== 主工作区 Workspace ==================== -->
+  <div class="flex min-w-0 flex-1 flex-col">
+
+    <!-- 顶栏 Header（h-16，白底微边框 + 磨砂）—— 左搜索(Cmd+K) 右操作区（规范 §3.3） -->
+    <header class="flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-surface/80 px-4 backdrop-blur dark:border-slate-800 dark:bg-surface-dark/80">
+      <button id="sidebarToggle" class="btn-ghost btn h-9 w-9 !px-0 focus-ring" aria-label="折叠/展开侧边栏">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+      </button>
+
+      <!-- 全局搜索框（点击/Cmd+K 打开命令面板） -->
+      <button id="searchTrigger" class="group flex h-9 min-w-0 flex-1 max-w-md items-center gap-2 rounded-lg border border-slate-200 bg-subtle px-3 text-sm text-slate-400 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-800/60 dark:hover:border-slate-700 focus-ring">
+        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+        <span class="flex-1 text-left truncate">搜索资源、页面、操作…</span>
+        <kbd class="hidden shrink-0 rounded border border-slate-300 bg-surface px-1.5 py-0.5 font-mono text-xs text-slate-500 sm:inline dark:border-slate-700 dark:bg-slate-900">⌘K</kbd>
+      </button>
+
+      <div class="ml-auto flex items-center gap-1.5">
+        <button class="btn btn-primary focus-ring" data-open-drawer>
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+          新建
+        </button>
+        <button class="btn-ghost btn h-9 w-9 !px-0 focus-ring" aria-label="通知">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+        </button>
+        <button id="themeToggle" class="btn-ghost btn h-9 w-9 !px-0 focus-ring" aria-label="切换深色模式">
+          <svg class="hidden h-5 w-5 dark:block" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+          <svg class="block h-5 w-5 dark:hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 内容区 main：唯一滚动容器（规范 §3.1） -->
+    <main class="flex-1 overflow-y-auto p-6">
+      <div class="mx-auto max-w-6xl space-y-10">
+
+        <!-- 页头 -->
+        <div>
+          <h1 class="text-xl font-bold text-slate-900 dark:text-slate-50">UI Kit 组件规范演示</h1>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            严格对齐 <span class="font-mono text-xs">DESIGN_SYSTEM.md</span> — 中性冷灰基调、状态确定性、键盘无障碍。
+          </p>
+        </div>
+
+        <!-- ========== Button ========== -->
+        <section class="card p-6">
+          <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Button 按钮</h2>
+          <p class="mt-1 text-xs text-slate-500">一个视图最多 1 个 Primary；异步点击立即进入 Loading 并禁用防重。</p>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <button class="btn btn-primary focus-ring">Primary 主操作</button>
+            <button class="btn btn-secondary focus-ring">Secondary 次操作</button>
+            <button class="btn btn-ghost focus-ring">Ghost 幽灵</button>
+            <button class="btn btn-danger focus-ring">Danger 危险</button>
+            <button class="btn btn-primary focus-ring" disabled>Disabled 禁用</button>
+            <button id="asyncBtn" class="btn btn-primary focus-ring w-32" data-label="异步提交">异步提交</button>
+          </div>
+          <p class="mt-3 text-xs text-slate-400">点击「异步提交」：立即变 Loading（转圈 + 处理中…）并加 <span class="font-mono">pointer-events-none</span> 防二次提交，2s 后复位。</p>
+        </section>
+
+        <!-- ========== Badge / Tag ========== -->
+        <section class="card p-6">
+          <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Badge / Tag 状态徽章</h2>
+          <p class="mt-1 text-xs text-slate-500">浅色底 + 深色字 + 弱描边 + 呼吸圆点，严禁大红大绿色块。</p>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <span class="badge badge-success"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span></span>运行中</span>
+            <span class="badge badge-warning"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500"></span></span>告警</span>
+            <span class="badge badge-danger"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500"></span></span>异常</span>
+            <span class="badge badge-info"><span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-500 opacity-75"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500"></span></span>处理中</span>
+          </div>
+        </section>
+
+        <!-- ========== DataTable ========== -->
+        <section class="card overflow-hidden">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4 dark:border-slate-800">
+            <div>
+              <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">DataTable 数据表格</h2>
+              <p class="mt-1 text-xs text-slate-500">表头固定 · 数值右对齐 font-mono · 空状态 · 骨架屏 · 刷新遮罩。</p>
+            </div>
+            <div class="flex items-center gap-1.5 rounded-lg bg-subtle p-1 dark:bg-slate-800">
+              <button class="btn-ghost btn px-2.5 py-1 text-xs focus-ring" data-table-state="data">数据</button>
+              <button class="btn-ghost btn px-2.5 py-1 text-xs focus-ring" data-table-state="skeleton">骨架屏</button>
+              <button class="btn-ghost btn px-2.5 py-1 text-xs focus-ring" data-table-state="empty">空状态</button>
+              <button class="btn-ghost btn px-2.5 py-1 text-xs focus-ring" data-table-state="refresh">刷新遮罩</button>
+            </div>
+          </div>
+
+          <!-- 表格滚动容器（表头 sticky 固定） -->
+          <div class="relative max-h-80 overflow-y-auto">
+            <!-- 刷新态半透明遮罩 -->
+            <div id="tableOverlay" class="absolute inset-0 z-20 hidden place-items-center bg-white/60 backdrop-blur-sm dark:bg-slate-900/60">
+              <svg class="h-6 w-6 animate-spin text-brand" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+            </div>
+
+            <table class="w-full border-collapse text-sm">
+              <thead class="sticky top-0 z-10 bg-subtle text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                <tr>
+                  <th class="px-4 py-2.5 text-left font-medium">实例名称</th>
+                  <th class="px-4 py-2.5 text-left font-medium">状态</th>
+                  <th class="px-4 py-2.5 text-right font-medium">CPU 使用率</th>
+                  <th class="px-4 py-2.5 text-right font-medium">吞吐量 (req/s)</th>
+                  <th class="px-4 py-2.5 text-right font-medium">操作</th>
+                </tr>
+              </thead>
+
+              <!-- 数据态 -->
+              <tbody id="tbodyData" class="divide-y divide-slate-200 dark:divide-slate-800">
+                <!-- 行由 JS 注入 -->
+              </tbody>
+
+              <!-- 骨架屏态 -->
+              <tbody id="tbodySkeleton" class="hidden divide-y divide-slate-200 dark:divide-slate-800">
+                <!-- 行由 JS 注入 -->
+              </tbody>
+            </table>
+
+            <!-- 空状态 -->
+            <div id="tableEmpty" class="hidden flex-col items-center justify-center px-6 py-16 text-center">
+              <div class="grid h-14 w-14 place-items-center rounded-full bg-subtle dark:bg-slate-800">
+                <svg class="h-7 w-7 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+              </div>
+              <h3 class="mt-4 text-sm font-semibold text-slate-900 dark:text-slate-100">暂无实例数据</h3>
+              <p class="mt-1 max-w-xs text-xs text-slate-500">当前工作空间下还没有创建任何实例。新建后即可在此查看运行状态与监控指标。</p>
+              <button class="btn btn-primary focus-ring mt-4" data-open-drawer>
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                新建实例
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== Overlays ========== -->
+        <section class="card p-6">
+          <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Overlays 弹出层</h2>
+          <p class="mt-1 text-xs text-slate-500">遮罩磨砂 · ESC / 点遮罩关闭 · 键盘焦点锁定（Tab 循环）。</p>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <button class="btn btn-secondary focus-ring" data-open-drawer>打开 Drawer（详情/轻编辑）</button>
+            <button class="btn btn-danger focus-ring" data-open-modal>打开 Modal（危险二次确认）</button>
+            <button class="btn btn-secondary focus-ring" data-open-palette>打开命令面板（⌘K）</button>
+          </div>
+        </section>
+
+        <!-- ========== Tokens ========== -->
+        <section class="card p-6">
+          <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Design Tokens 色彩令牌</h2>
+          <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div><div class="h-12 rounded-lg border border-slate-200 bg-canvas dark:border-slate-800 dark:bg-canvas-dark"></div><p class="mt-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">Canvas</p></div>
+            <div><div class="h-12 rounded-lg border border-slate-200 bg-surface dark:border-slate-800 dark:bg-surface-dark"></div><p class="mt-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">Surface</p></div>
+            <div><div class="h-12 rounded-lg border border-slate-200 bg-subtle dark:border-slate-800"></div><p class="mt-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">Subtle</p></div>
+            <div><div class="h-12 rounded-lg bg-brand"></div><p class="mt-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">Brand</p></div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== Drawer 侧边抽屉 ==================== -->
+  <div id="drawer" class="fixed inset-0 z-40 hidden">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-overlay-close></div>
+    <div role="dialog" aria-modal="true" aria-labelledby="drawerTitle"
+         class="absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-slate-200 bg-surface shadow-xl dark:border-slate-800 dark:bg-surface-dark">
+      <div class="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-5 dark:border-slate-800">
+        <h2 id="drawerTitle" class="text-sm font-semibold text-slate-900 dark:text-slate-50">新建实例</h2>
+        <button class="btn-ghost btn h-8 w-8 !px-0 focus-ring" data-overlay-close aria-label="关闭">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="flex-1 space-y-4 overflow-y-auto p-5">
+        <label class="block">
+          <span class="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-400">实例名称</span>
+          <input data-autofocus type="text" placeholder="如：api-gateway-prod"
+                 class="w-full rounded-lg border border-slate-200 bg-surface px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 focus-ring" />
+        </label>
+        <label class="block">
+          <span class="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-400">规格</span>
+          <select class="w-full rounded-lg border border-slate-200 bg-surface px-3 py-2 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 focus-ring">
+            <option>2 vCPU · 4 GiB</option>
+            <option>4 vCPU · 8 GiB</option>
+            <option>8 vCPU · 16 GiB</option>
+          </select>
+        </label>
+      </div>
+      <div class="flex shrink-0 items-center justify-end gap-3 border-t border-slate-200 p-5 dark:border-slate-800">
+        <button class="btn btn-secondary focus-ring" data-overlay-close>取消</button>
+        <button class="btn btn-primary focus-ring">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Modal 对话框（危险二次确认）==================== -->
+  <div id="modal" class="fixed inset-0 z-40 hidden">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-overlay-close></div>
+    <div class="absolute inset-0 grid place-items-center p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="modalTitle"
+           class="card w-full max-w-md p-6 shadow-xl">
+        <div class="flex items-start gap-3">
+          <div class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-rose-50 dark:bg-rose-500/10">
+            <svg class="h-5 w-5 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+          </div>
+          <div class="min-w-0">
+            <h2 id="modalTitle" class="text-sm font-semibold text-slate-900 dark:text-slate-50">确认删除该实例？</h2>
+            <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">此操作不可撤销，实例 <span class="font-mono text-xs">api-gateway-prod</span> 及其数据将被永久删除。</p>
+          </div>
+        </div>
+        <div class="mt-6 flex items-center justify-end gap-3">
+          <button data-autofocus class="btn btn-secondary focus-ring" data-overlay-close>取消</button>
+          <button class="btn btn-danger focus-ring">确认删除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Command Palette（Cmd+K）==================== -->
+  <div id="palette" class="fixed inset-0 z-40 hidden">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" data-overlay-close></div>
+    <div class="absolute inset-x-0 top-[15vh] mx-auto w-full max-w-lg px-4">
+      <div role="dialog" aria-modal="true" class="card overflow-hidden shadow-xl">
+        <div class="flex items-center gap-2 border-b border-slate-200 px-4 dark:border-slate-800">
+          <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+          <input data-autofocus id="paletteInput" type="text" placeholder="输入命令或搜索…"
+                 class="w-full bg-transparent py-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-100" />
+          <kbd class="shrink-0 rounded border border-slate-300 bg-subtle px-1.5 py-0.5 font-mono text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800">ESC</kbd>
+        </div>
+        <ul id="paletteList" class="max-h-72 overflow-y-auto p-2 text-sm"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    /* ---------- 深色模式（class 策略） ---------- */
+    const root = document.documentElement;
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      root.classList.toggle('dark');
+    });
+
+    /* ---------- 侧边栏折叠 ---------- */
+    const sidebar = document.getElementById('sidebar');
+    document.getElementById('sidebarToggle').addEventListener('click', () => {
+      const collapsed = sidebar.classList.toggle('w-16');
+      sidebar.classList.toggle('w-64', !collapsed);
+      // 折叠态隐藏文字/次要元素
+      document.querySelectorAll('[data-collapse-hide]').forEach((el) => el.classList.toggle('hidden', collapsed));
+    });
+
+    /* ---------- Button 异步防重复提交 ---------- */
+    const asyncBtn = document.getElementById('asyncBtn');
+    const spinnerSVG = '<svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>';
+    asyncBtn.addEventListener('click', () => {
+      if (asyncBtn.disabled) return; // 防重
+      asyncBtn.disabled = true;
+      asyncBtn.classList.add('pointer-events-none', 'opacity-60');
+      asyncBtn.innerHTML = spinnerSVG + '处理中…';
+      setTimeout(() => {
+        asyncBtn.disabled = false;
+        asyncBtn.classList.remove('pointer-events-none', 'opacity-60');
+        asyncBtn.textContent = asyncBtn.dataset.label;
+      }, 2000);
+    });
+
+    /* ---------- DataTable：数据 / 骨架屏 / 空状态 / 刷新遮罩 ---------- */
+    const ROWS = [
+      { name: 'api-gateway-prod', badge: 'success', label: '运行中', cpu: '38.2%', tps: '1,204' },
+      { name: 'auth-service', badge: 'info', label: '处理中', cpu: '12.5%', tps: '486' },
+      { name: 'billing-worker', badge: 'warning', label: '告警', cpu: '81.7%', tps: '92' },
+      { name: 'search-indexer', badge: 'danger', label: '异常', cpu: '99.1%', tps: '0' },
+    ];
+    const dot = (c) =>
+      `<span class="relative flex h-1.5 w-1.5"><span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-${c}-500 opacity-75"></span><span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-${c}-500"></span></span>`;
+    const badgeColor = { success: 'emerald', warning: 'amber', danger: 'rose', info: 'blue' };
+    const tbodyData = document.getElementById('tbodyData');
+    tbodyData.innerHTML = ROWS.map((r) => `
+      <tr class="hover:bg-subtle dark:hover:bg-slate-800/50">
+        <td class="px-4 py-3 text-left font-medium text-slate-900 dark:text-slate-100">${r.name}</td>
+        <td class="px-4 py-3 text-left"><span class="badge badge-${r.badge}">${dot(badgeColor[r.badge])}${r.label}</span></td>
+        <td class="px-4 py-3 text-right font-mono tabular-nums text-slate-700 dark:text-slate-300">${r.cpu}</td>
+        <td class="px-4 py-3 text-right font-mono tabular-nums text-slate-700 dark:text-slate-300">${r.tps}</td>
+        <td class="px-4 py-3 text-right"><button class="btn-ghost btn px-2 py-1 text-xs focus-ring">详情</button></td>
+      </tr>`).join('');
+
+    const tbodySkeleton = document.getElementById('tbodySkeleton');
+    const skelCell = (w, right) =>
+      `<td class="px-4 py-3"><div class="h-3.5 ${w} ${right ? 'ml-auto' : ''} animate-pulse rounded bg-slate-100 dark:bg-slate-800"></div></td>`;
+    tbodySkeleton.innerHTML = Array.from({ length: 4 }).map(() =>
+      `<tr>${skelCell('w-32')}${skelCell('w-20')}${skelCell('w-14', true)}${skelCell('w-16', true)}${skelCell('w-10', true)}</tr>`).join('');
+
+    const els = {
+      data: tbodyData,
+      skeleton: tbodySkeleton,
+      empty: document.getElementById('tableEmpty'),
+      overlay: document.getElementById('tableOverlay'),
+    };
+    function setTableState(state) {
+      els.data.classList.toggle('hidden', state !== 'data' && state !== 'refresh');
+      els.skeleton.classList.toggle('hidden', state !== 'skeleton');
+      els.empty.classList.toggle('hidden', state !== 'empty');
+      els.empty.classList.toggle('flex', state === 'empty');
+      els.overlay.classList.toggle('hidden', state !== 'refresh');
+      els.overlay.classList.toggle('grid', state === 'refresh');
+    }
+    document.querySelectorAll('[data-table-state]').forEach((btn) =>
+      btn.addEventListener('click', () => setTableState(btn.dataset.tableState)));
+
+    /* ---------- Overlay 通用：打开/关闭 + ESC + 焦点锁定 ---------- */
+    let activeOverlay = null;
+    let lastFocused = null;
+    const focusablesSel = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+    function openOverlay(el) {
+      if (activeOverlay) closeOverlay();
+      lastFocused = document.activeElement;
+      el.classList.remove('hidden');
+      activeOverlay = el;
+      const focusTarget = el.querySelector('[data-autofocus]') || el.querySelector(focusablesSel);
+      focusTarget && focusTarget.focus();
+      document.addEventListener('keydown', onOverlayKeydown, true);
+    }
+    function closeOverlay() {
+      if (!activeOverlay) return;
+      activeOverlay.classList.add('hidden');
+      activeOverlay = null;
+      document.removeEventListener('keydown', onOverlayKeydown, true);
+      lastFocused && lastFocused.focus();
+    }
+    function onOverlayKeydown(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeOverlay();
+        return;
+      }
+      if (e.key === 'Tab' && activeOverlay) {
+        const nodes = Array.from(activeOverlay.querySelectorAll(focusablesSel)).filter((n) => n.offsetParent !== null);
+        if (!nodes.length) return;
+        const first = nodes[0];
+        const last = nodes[nodes.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+    // 点击遮罩 / 关闭按钮
+    document.querySelectorAll('[data-overlay-close]').forEach((el) =>
+      el.addEventListener('click', closeOverlay));
+    // 触发器
+    document.querySelectorAll('[data-open-drawer]').forEach((b) =>
+      b.addEventListener('click', () => openOverlay(document.getElementById('drawer'))));
+    document.querySelectorAll('[data-open-modal]').forEach((b) =>
+      b.addEventListener('click', () => openOverlay(document.getElementById('modal'))));
+
+    /* ---------- Command Palette（Cmd+K / Ctrl+K）---------- */
+    const palette = document.getElementById('palette');
+    const paletteInput = document.getElementById('paletteInput');
+    const paletteList = document.getElementById('paletteList');
+    const COMMANDS = ['仪表盘', '数据分析', '实例列表', '新建实例', '系统设置', '切换工作空间', '查看通知'];
+    function renderPalette(q = '') {
+      const items = COMMANDS.filter((c) => c.toLowerCase().includes(q.toLowerCase()));
+      paletteList.innerHTML = items.length
+        ? items.map((c) =>
+            `<li><button class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-subtle dark:text-slate-300 dark:hover:bg-slate-800 focus-ring"><svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/></svg>${c}</button></li>`).join('')
+        : '<li class="px-3 py-6 text-center text-xs text-slate-400">未找到匹配的命令</li>';
+    }
+    function openPalette() {
+      renderPalette('');
+      paletteInput.value = '';
+      openOverlay(palette);
+    }
+    paletteInput.addEventListener('input', () => renderPalette(paletteInput.value));
+    document.querySelectorAll('[data-open-palette]').forEach((b) => b.addEventListener('click', openPalette));
+    document.getElementById('searchTrigger').addEventListener('click', openPalette);
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        openPalette();
+      }
+    });
+  </script>
+</body>
+</html>

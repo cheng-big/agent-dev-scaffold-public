@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task_id": "phase-reverse-design",
+  "objective": "[02 逆向设计] 把需求榨干成架构 + 验收剧本（页面契约独立为下一阶段）",
+  "status": "completed",
+  "phase": "逆向设计",
+  "current_focus": "",
+  "next_action": "产出「宏观架构」→ docs/architecture/<sys>_arch.json",
+  "blockers": [],
+  "critical_constraints": [
+    "凡不闭环/矛盾/缺失/落差一律进 AMBIGUITIES-INDEX 熔断账并标 [ASSUMPTION 待业务确认]",
+    "功能点不 1:1 铺菜单，按流程+优先级+受众收敛 IA"
+  ],
+  "recent_completed": [
+    {
+      "at": "2026-08-24T09:00:00+08:00",
+      "summary": "reverse-design 阶段产物已确认签核",
+      "step_id": "step-1",
+      "evidence": []
+    }
+  ],
+  "definition_of_done": [
+    {
+      "text": "六类产品交付物齐备",
+      "met": true,
+      "evidence": []
+    },
+    {
+      "text": "覆盖矩阵逐条登记归口（不假装全做）",
+      "met": true,
+      "evidence": []
+    }
+  ],
+  "references": [
+    "docs/architecture/<sys>_arch.json",
+    "docs/probes/<sys>_probe.json",
+    "docs/product/<sys>/coverage-matrix.md",
+    "docs/product/<sys>/data-model.md",
+    "docs/product/AMBIGUITIES-INDEX.md"
+  ],
+  "open_step": null,
+  "version": 5,
+  "created_at": "2026-08-24T02:46:45.968Z",
+  "updated_at": "2026-08-27T13:42:15.756Z"
+}
