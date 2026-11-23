@@ -33,7 +33,7 @@
 
 ## 4. 当前基线与集成边界
 
-`/Users/git/AI/agent-dev-scaffold` 当前 `main` 基于 `5d1fae3`，存在一组已授权保留的未提交升级，主要包括：
+`<scaffold-root>` 当前 `main` 基于 `5d1fae3`，存在一组已授权保留的未提交升级，主要包括：
 
 - 7 阶段默认方法论与独立页面契约阶段；
 - 逐系统 worklist；

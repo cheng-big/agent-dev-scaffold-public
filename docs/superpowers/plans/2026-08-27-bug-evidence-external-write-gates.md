@@ -12,13 +12,13 @@
 
 ## Global Constraints
 
-- Preserve the existing dirty baseline in `/Users/git/AI/agent-dev-scaffold`; do not reset, stash, or overwrite its 7-stage/worklist/viewer/board-hook work.
+- Preserve the existing dirty baseline in `<scaffold-root>`; do not reset, stash, or overwrite its 7-stage/worklist/viewer/board-hook work.
 - Keep the source template dependency-free outside Node.js built-ins.
 - Runtime tasks, journal, decisions, evidence, checkpoints, reports, and active pointers remain uncommitted project-local state.
 - `status`/`source_status` describe the source system; `verification_status` describes this run and never overwrites source truth.
 - External-write completion requires a fresh independent readback for every declared target; DOM visibility, HTTP 200, same-page formula-bar text, and an attempted write are insufficient.
 - Do not claim or implement reliable Feishu Canvas automation inside the harness.
-- When upgrading `/Users/git/python/hotel_agent/.agent`, preserve `PROJECT.md`, `process.json`, `bugs.json`, and every runtime directory.
+- When upgrading `<target-project>/.agent`, preserve `PROJECT.md`, `process.json`, `bugs.json`, and every runtime directory.
 - In the Hotel Agent project, finish all harness sync edits before running only the affected harness/report tests.
 
 ---
@@ -58,10 +58,10 @@
 
 ### Installed Hotel Agent harness
 
-- Sync source files into: `/Users/git/python/hotel_agent/.agent/scripts/`, `/schemas/`, and `/process/`
-- Preserve: `/Users/git/python/hotel_agent/.agent/{PROJECT.md,process.json,bugs.json,tasks,journal,decisions,evidence,checkpoints,ACTIVE_TASK.json,process-state.json}`
-- Regenerate: `/Users/git/python/hotel_agent/.agent/reports/index.html`
-- Create: `/Users/git/python/hotel_agent/.agent/reports/manifest.json`
+- Sync source files into: `<target-project>/.agent/scripts/`, `/schemas/`, and `/process/`
+- Preserve: `<target-project>/.agent/{PROJECT.md,process.json,bugs.json,tasks,journal,decisions,evidence,checkpoints,ACTIVE_TASK.json,process-state.json}`
+- Regenerate: `<target-project>/.agent/reports/index.html`
+- Create: `<target-project>/.agent/reports/manifest.json`
 
 ---
 
@@ -721,9 +721,9 @@ Expected: local and `origin/main` hashes match exactly.
 ### Task 7: Upgrade the Hotel Agent Harness Without Touching Runtime State
 
 **Files:**
-- Update committed template files under `/Users/git/python/hotel_agent/.agent/scripts`, `/schemas`, and `/process`.
+- Update committed template files under `<target-project>/.agent/scripts`, `/schemas`, and `/process`.
 - Preserve project-specific and runtime paths listed in Global Constraints.
-- Regenerate `/Users/git/python/hotel_agent/.agent/reports/index.html` and `manifest.json`.
+- Regenerate `<target-project>/.agent/reports/index.html` and `manifest.json`.
 
 **Interfaces:**
 - Consumes: pushed source template and the Hotel Agent dual-status ledger/evidence.
@@ -731,7 +731,7 @@ Expected: local and `origin/main` hashes match exactly.
 
 - [ ] **Step 1: Snapshot protected Hotel Agent runtime identities**
 
-Run from `/Users/git/python/hotel_agent`:
+Run from `<target-project>`:
 
 ```bash
 node .agent/scripts/agent.mjs status --json
@@ -747,12 +747,12 @@ Save the hashes and file count in a harness evidence record before copying templ
 Copy exact source-template files without `--delete`:
 
 ```bash
-cp -R /Users/git/AI/agent-dev-scaffold/dot-agent/scripts /Users/git/python/hotel_agent/.agent/
-cp -R /Users/git/AI/agent-dev-scaffold/dot-agent/schemas /Users/git/python/hotel_agent/.agent/
-cp -R /Users/git/AI/agent-dev-scaffold/dot-agent/process /Users/git/python/hotel_agent/.agent/
-cp /Users/git/AI/agent-dev-scaffold/dot-agent/README.md /Users/git/python/hotel_agent/.agent/README.md
-cp /Users/git/AI/agent-dev-scaffold/dot-agent/PORTING.md /Users/git/python/hotel_agent/.agent/PORTING.md
-cp /Users/git/AI/agent-dev-scaffold/dot-agent/UPGRADE-PROMPT.md /Users/git/python/hotel_agent/.agent/UPGRADE-PROMPT.md
+cp -R <scaffold-root>/dot-agent/scripts <target-project>/.agent/
+cp -R <scaffold-root>/dot-agent/schemas <target-project>/.agent/
+cp -R <scaffold-root>/dot-agent/process <target-project>/.agent/
+cp <scaffold-root>/dot-agent/README.md <target-project>/.agent/README.md
+cp <scaffold-root>/dot-agent/PORTING.md <target-project>/.agent/PORTING.md
+cp <scaffold-root>/dot-agent/UPGRADE-PROMPT.md <target-project>/.agent/UPGRADE-PROMPT.md
 ```
 
 Do not copy `PROJECT.md.template` over `PROJECT.md`; do not copy a process template over `process.json`.
@@ -793,10 +793,10 @@ Add harness evidence containing source commit, protected hashes, test output, an
 Run:
 
 ```bash
-git -C /Users/git/AI/agent-dev-scaffold status --short --branch
-git -C /Users/git/AI/agent-dev-scaffold rev-parse HEAD
-git --git-dir=/Users/git/python/hotel_agent/.git worktree list --porcelain
-node /Users/git/python/hotel_agent/.agent/scripts/agent.mjs board
+git -C <scaffold-root> status --short --branch
+git -C <scaffold-root> rev-parse HEAD
+git --git-dir=<target-project>/.git worktree list --porcelain
+node <target-project>/.agent/scripts/agent.mjs board
 ```
 
 Expected: source scaffold is clean and pushed; Hotel Agent runtime is preserved; the board reflects completed probe/report work and the still-blocked external Feishu write.
