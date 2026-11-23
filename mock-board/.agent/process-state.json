@@ -61,7 +61,7 @@
       "phase_id": "build-systems",
       "key": "backend-modules",
       "name": "后端业务模块",
-      "path": "src/main/java/com/xizang/fitness/modules/user",
+      "path": "src/main/java/com/example/modules/user",
       "status": "done",
       "registered_at": "2026-08-24T09:00:00+08:00"
     },

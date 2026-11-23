@@ -5,7 +5,7 @@
   "status": "completed",
   "phase": "夯实地基",
   "current_focus": "",
-  "next_action": "产出「平台内核模块」→ src/main/java/com/xizang/fitness/platform",
+  "next_action": "产出「平台内核模块」→ src/main/java/com/example/platform",
   "blockers": [],
   "critical_constraints": [
     "共享内核单一真源，引用一律外键锁死杜绝孤儿数据"
@@ -26,7 +26,7 @@
     }
   ],
   "references": [
-    "src/main/java/com/xizang/fitness/platform",
+    "src/main/java/com/example/platform",
     "src/main/resources/db/migration"
   ],
   "open_step": null,

@@ -27,8 +27,8 @@ put('docs/probes/xz_probe.json', '{ "probes": ["Probe_9999"], "note": "脏数据
 put('docs/product/xz/coverage-matrix.md', '# 覆盖矩阵\n功能点逐条归口……');
 put('docs/blueprints/xz_blueprint.json', '{ "pages": [{ "menu_group": "用户", "data": ["userId","name"], "action": ["create","disable"], "input": ["orgId 下拉"] }] }');
 put('docs/blueprints/xz_blueprint.html', '<!doctype html><meta charset=utf-8><title>页面契约渲染</title><body style="font-family:system-ui;padding:32px"><h1>📐 页面契约·渲染蓝图（mock）</h1><p>这是 anti-omission-dev-blueprint 产出的可读契约页示例：每页 data/action/input 三视图。</p></body>');
-mkdirSync(join(MOCK, 'src/main/java/com/xizang/fitness/modules/user'), { recursive: true });
-writeFileSync(join(MOCK, 'src/main/java/com/xizang/fitness/modules/user/UserController.java'), '// mock');
+mkdirSync(join(MOCK, 'src/main/java/com/example/modules/user'), { recursive: true });
+writeFileSync(join(MOCK, 'src/main/java/com/example/modules/user/UserController.java'), '// mock');
 
 // —— 阶段推进：前 4 站完成，第 5 站(逐系统建造)进行中 ——
 const done = ['understand', 'reverse-design', 'page-contract', 'foundation'];
@@ -77,7 +77,7 @@ taskMod.updateTask(bs, (t) => {
   };
   t.references = ['页面契约:docs/blueprints/xz_blueprint.html', '架构:docs/architecture/xz_arch.json'];
 });
-reg('build-systems', 'backend-modules', '后端业务模块', 'src/main/java/com/xizang/fitness/modules/user');
+reg('build-systems', 'backend-modules', '后端业务模块', 'src/main/java/com/example/modules/user');
 reg('build-systems', 'frontend-views', '前端页面', 'apps/web/src/views/user');  // 故意不落盘 → 看板显 ✗
 
 // —— 开发任务清单 · 逐系统（流程 tab 展示）：走真实 API addSystem/setWorklistStatus ——

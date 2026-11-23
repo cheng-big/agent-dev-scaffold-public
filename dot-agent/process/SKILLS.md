@@ -5,7 +5,7 @@
 
 ## 清单（阶段 → skill → 用途 → 证据级别）
 
-> 映射按 `xzPrdV2` 真实实现核对。证据级别：**代码**=workflows/*.mjs 里有 `agentType` 真调用；**文档**=复盘 HTML / DAG-PLAYBOOK 等事后归纳。
+> 映射按参考项目的实际实现核对。证据级别：**代码**=工作流脚本里有真实调用；**文档**=项目复盘或流程文档中的约定。
 
 | 阶段 | skill | 用途 | 证据 |
 |---|---|---|---|
@@ -35,7 +35,7 @@
 
 `agent-skills:code-reviewer` 会解析为项目内的 `code-reviewer`。`agent-skills:debugging-and-error-recovery` 和 `agent-skills:browser-testing-with-devtools` 也会解析为对应的项目目录。
 
-> **诚实边界**（核对发现）：① `agent-skills:` 系列在 `xzPrdV2` 只在**阶段03 内核评审**用了 `code-reviewer`（唯一代码级证据）；`BUILD-LEDGER.md` 另有一句 `/loop` 走 `agent-skills:plan/build/review/test/ship` 的**文字约定**，但无脚本落地。② 阶段 04 逐系统建造是**纯 kando-system-build**，未渗入 agent-skills。③ `kando-usability-closure`、`prd-ux-*` 全仓无引用，故不写进默认 process.json。
+> **诚实边界**：`agent-skills:` 系列只在平台内核评审阶段使用 `code-reviewer`。其他阶段使用对应的系统构建、探针和缺口检查 skill。没有实际调用证据的 skill 不写入默认流程。
 
 ## 怎么确认装没装
 

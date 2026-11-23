@@ -150,7 +150,7 @@
           "key": "platform-modules",
           "name": "平台内核模块",
           "desc": "platform.* 内核模块（auth/approval/message/mid/region/dict/menu/identity…）",
-          "path": "src/main/java/com/xizang/fitness/platform",
+          "path": "src/main/java/com/example/platform",
           "required": true
         },
         {
@@ -191,7 +191,7 @@
           "key": "backend-modules",
           "name": "后端业务模块",
           "desc": "modules.* 业务模块（迁移+实体+Service+Controller）",
-          "path": "src/main/java/com/xizang/fitness/modules/<sys>",
+          "path": "src/main/java/com/example/modules/<sys>",
           "required": true
         },
         {
