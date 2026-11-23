@@ -1,17 +1,24 @@
-// best-effort skill 探测：判断某 skill 是否在当前环境可用。
+// best-effort skill 探测：判断某 skill 是否在项目或当前环境可用。
 // 诚实三态：installed（命中） / not_found（已知路径均未命中） / unknown（无从探测，如根目录都不存在）。
-// 隔离环境耦合：只有这一处知道 skill 的磁盘布局；换 agent 平台改 skillRoots() 即可。
+// 隔离环境耦合：只有这一处知道 skill 的磁盘布局；换 agent 平台改 skillLocations() 即可。
 
 import { existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 
-// 已知的 skill 根目录（面向 Claude Code 布局；可按需扩展）。
-export function skillRoots(cwd = process.cwd()) {
+function skillLocations(cwd = process.cwd()) {
   return [
-    join(cwd, '.claude', 'skills'),
-    join(homedir(), '.claude', 'skills'),
+    { root: join(cwd, '.agent', 'skills'), source: 'project' },
+    { root: join(cwd, 'dot-agent', 'skills'), source: 'project' },
+    { root: join(cwd, '.claude', 'skills'), source: 'project' },
+    { root: join(homedir(), '.claude', 'skills'), source: 'global' },
+    { root: join(homedir(), '.agents', 'skills'), source: 'global' },
+    { root: join(homedir(), '.codex', 'skills'), source: 'global' },
   ];
+}
+
+export function skillRoots(cwd = process.cwd()) {
+  return skillLocations(cwd).map(({ root }) => root);
 }
 
 function isDir(p) {
@@ -35,19 +42,25 @@ function hitInRoot(root, name) {
   return false;
 }
 
+export function skillInfo(name, { cwd = process.cwd() } = {}) {
+  if (!name) return { state: 'unknown', source: null };
+  const locations = skillLocations(cwd);
+  const existingLocations = locations.filter(({ root }) => isDir(root));
+  if (existingLocations.length === 0) return { state: 'unknown', source: null };
+  for (const location of existingLocations) {
+    if (hitInRoot(location.root, name)) return { state: 'installed', source: location.source };
+  }
+  return { state: 'not_found', source: null };
+}
+
 // 返回 'installed' | 'not_found' | 'unknown'
 export function detectSkill(name, { cwd = process.cwd() } = {}) {
-  if (!name) return 'unknown';
-  const roots = skillRoots(cwd);
-  const existingRoots = roots.filter(isDir);
-  if (existingRoots.length === 0) return 'unknown'; // 无处可查，不谎称一定没装
-  for (const root of existingRoots) if (hitInRoot(root, name)) return 'installed';
-  return 'not_found';
+  return skillInfo(name, { cwd }).state;
 }
 
 // 徽章文案（人读）
-export function skillBadge(state) {
-  if (state === 'installed') return '✓已装';
+export function skillBadge(state, source = null) {
+  if (state === 'installed') return source === 'project' ? '✓项目内置' : '✓全局已装';
   if (state === 'not_found') return '✗未装';
   return '?未知';
 }

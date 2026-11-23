@@ -1,0 +1,128 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>flow-probe · 浏览器真流程测试方法 · 使用指南</title>
+<style>
+  :root{--ink:#1a2332;--mut:#6b7280;--bd:#e3e6ea;--bg:#f6f8fa;--acc:#1a5fd0;--ok:#0a7;--warn:#e69138;--bad:#c00}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.75 -apple-system,"PingFang SC",Segoe UI,Roboto,sans-serif;color:#1a1f27;background:var(--bg)}
+  header{background:var(--ink);color:#fff;padding:26px 32px}
+  header h1{margin:0 0 4px;font-size:22px} header .sub{opacity:.85;font-size:13.5px}
+  main{max-width:960px;margin:0 auto;padding:24px 28px 60px}
+  section{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:20px 24px;margin:18px 0}
+  h2{font-size:18px;color:var(--ink);margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid #e8f0fe}
+  h3{font-size:15px;color:#274b7a;margin:16px 0 6px}
+  p{margin:8px 0} code{background:#f0f3f7;padding:1px 6px;border-radius:5px;font-size:13px;color:#b93815}
+  pre{background:#0f1729;color:#d7e0f0;border-radius:9px;padding:14px 16px;overflow:auto;font-size:12.5px;line-height:1.6}
+  pre code{background:none;color:inherit;padding:0}
+  .flow{background:#0f1729;color:#c8d4ea;border-radius:9px;padding:16px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.55;white-space:pre;overflow:auto}
+  .steps{counter-reset:s;list-style:none;padding:0;margin:8px 0}
+  .steps li{counter-increment:s;position:relative;padding:8px 0 8px 40px;border-bottom:1px dashed var(--bd)}
+  .steps li:last-child{border:none}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:8px;width:26px;height:26px;border-radius:50%;background:var(--acc);color:#fff;text-align:center;line-height:26px;font-weight:700;font-size:13px}
+  .steps b{color:var(--ink)}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+  th,td{border:1px solid var(--bd);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:#f0f3f7}
+  .tag{display:inline-block;border-radius:9px;padding:1px 9px;font-size:12px;font-weight:700;color:#fff}
+  .t-pass{background:var(--ok)} .t-mm{background:var(--warn)} .t-gap{background:var(--bad)} .t-info{background:var(--acc)}
+  .disc{background:#fff8f0;border-left:4px solid var(--warn);padding:10px 14px;border-radius:6px;margin:10px 0}
+  .good{background:#eefaf3;border-left:4px solid var(--ok);padding:10px 14px;border-radius:6px;margin:10px 0}
+  .pill{display:inline-block;background:#e8f0fe;color:var(--acc);border-radius:20px;padding:2px 12px;font-size:12px;font-weight:600;margin:2px 4px 2px 0}
+  ol,ul{margin:8px 0;padding-left:22px} li{margin:3px 0}
+</style></head>
+<body>
+<header>
+  <h1>flow-probe —— 浏览器真流程测试方法</h1>
+  <div class="sub">对着业务流程规格，把每条流程当真实用户跨端走一遍：浏览器点真页面 + 后端回查坐实 → 出问题清单 → 闭环修复。<b>不是接口 200 冒烟，不做假绿。</b></div>
+</header>
+<main>
+
+<section>
+  <h2>① 这套方法在做什么</h2>
+  <p>一个业务平台功能"开发完了"，不等于每条业务流程"真跑得通"。这套方法<b>照流程规格(时序图/流程文档)逐条流程、跨端(公众门户/管理后台/移动端)、用浏览器点真实页面驱动，每一步都用后端权威回查坐实</b>，评估"按应然是否真跑得通"，产出一份<b>单文件交互 HTML 报告</b>(正常流程逐步骤 + 当前问题 + 修复意见)，再<b>闭环修复</b>。</p>
+  <p>它比接口测试强在哪：接口测试只验"<code>POST /review</code> 返回 200"；这套方法验"审核员打开审核待办页，<b>真的能点到通过按钮</b>把它办结吗"——后者才是真实用户的路径，很多缺陷(页面缺按钮、列表看不到该数据、下拉设不进值)只有点真页面才暴露。</p>
+</section>
+
+<section>
+  <h2>② 一图流水线</h2>
+  <div class="flow">流程规格(时序图/泳道/状态机) ──抽泳道──▶ 步骤→端映射
+   (应然真源)                              │
+角色/权限 + 字段级需求 ─────────────────────┤
+                                           ▼
+              摸实现(后端 controller/状态枚举/种子 · 前端 路由/按钮/公众端点)
+                                           ▼
+              写探针(逐步骤 · 落端 · 浏览器点真按钮 · 后端回查坐实)
+                                           ▼
+              起隔离栈跑(建库→迁移→后端→前端→Playwright→拆栈)
+                                           ▼
+              判定 PASS / MISMATCH / GAP / ERROR / INFO  (每步带 端 · 驱动UI-HTTP · 修复意见 · 截图)
+                                           ▼
+       systems/*.json ─▶ ★ report.html (单文件交互报告 = 最终交付物) + 问题清单
+                                           ▼
+              闭环：问题 → 改产品代码 → 重跑该系统 → 转绿</div>
+</section>
+
+<section>
+  <h2>③ 8 步流水线</h2>
+  <ol class="steps">
+    <li><b>抽泳道</b>：从时序图 participant 逐步骤抽「角色(谁) + 端(公众门户/管理后台/移动端…) + 是否跨系统」。别把跨端流程全塞管理后台。</li>
+    <li><b>摸实现</b>：后端 controller/状态枚举/种子账号；前端路由、页面、<b>真实按钮</b>(看表格 <code>prop=</code> 定位可见列、<code>@click=</code> 定位动作按钮)。</li>
+    <li><b>定账号</b>：每个「端×角色」一个浏览器上下文；注意<b>分级路由</b>(审批区划常取提交人区划，提交人须辖区账号否则待办为空)。</li>
+    <li><b>写探针</b>：每步 <code>step(端, 应然, 实测, 判定, 驱动, 修复意见, 截图)</code>；<b>有页面就浏览器点真按钮</b>(uiDrive/审核待办点通过)，<b>后端回查坐实</b>，<b>点不到就判红</b>不兜底。</li>
+    <li><b>起隔离栈跑</b>：建隔离库→迁移→后端→前端→Playwright→拆栈。headless 先验，再有头出图。</li>
+    <li><b>判定</b>：见下表；每步双维度 端 + 驱动(UI/HTTP)。</li>
+    <li><b>报告</b>：探针落 <code>systems/&lt;code&gt;.json</code> → 合成 <code>report.html</code>(最终交付物)。</li>
+    <li><b>闭环修复</b>：问题→定位(前端/后端/迁移/契约)→改产品代码→重跑→转绿。</li>
+  </ol>
+  <table>
+    <tr><th>判定</th><th>含义</th><th>严重度</th></tr>
+    <tr><td><span class="tag t-pass">PASS</span></td><td>实测与应然一致，且后端回查坐实</td><td>—</td></tr>
+    <tr><td><span class="tag t-mm">MISMATCH</span></td><td>能跑通但口径分叉，或断言不成立</td><td>P2</td></tr>
+    <tr><td><span class="tag t-gap">GAP</span></td><td>应然有该步/态，实现无落地</td><td>P1</td></tr>
+    <tr><td><span class="tag t-gap">ERROR</span></td><td>报错/5xx/异常</td><td>P0</td></tr>
+    <tr><td><span class="tag t-info">INFO</span></td><td>业务规则观察 / 跨系统 stub</td><td>观察</td></tr>
+  </table>
+  <h3>五条质量纪律（凭什么可信）</h3>
+  <p><span class="pill">杜绝假绿·每步后端回查</span><span class="pill">坐实再下结论·先读源码</span><span class="pill">点不到就算红</span><span class="pill">诚实暴露 GAP</span><span class="pill">泳道不压平</span></p>
+</section>
+
+<section>
+  <h2>④ 最终结果是 HTML</h2>
+  <p>每轮测试跑完 → <code>harness/reports/report.html</code>：单文件、自包含、浏览器打开即用。<b>左侧</b>选系统(带 UI驱动%/通过率/问题数)，<b>右上</b>该系统正常流程逐步骤(端·应然·实测·判定·驱动UI-HTTP·截图)，<b>右下</b>当前问题+修复意见。这就是交给评审/团队的东西。</p>
+</section>
+
+<section>
+  <h2>⑤ 怎么把这套方法丢给别人（分发）</h2>
+  <p>这套方法 = 一个 Claude Code 全局技能目录 <code>~/.claude/skills/flow-probe/</code>。</p>
+  <ol>
+    <li>打包：<pre><code>zip -r flow-probe-skill.zip ~/.claude/skills/flow-probe</code></pre></li>
+    <li>发给对方，对方解压到自己的 <code>~/.claude/skills/flow-probe/</code>(全局，跨项目生效)，下次 Claude Code 会话即识别。</li>
+    <li>只想让人「看懂方法 + 怎么用」：单独发本文件 <code>flow-probe-guide.html</code>，浏览器打开就懂。</li>
+  </ol>
+</section>
+
+<section>
+  <h2>⑥ 别人拿到后怎么用（在自己项目落地）</h2>
+  <ol>
+    <li>把 skill 的 <code>assets/</code> 里 <code>flow-probe-lib.mjs</code>/<code>build-report.mjs</code>/<code>run-stack.sh.tmpl</code>(改名 run-stack.sh)/<code>example-flow-probe.mjs</code> 拷进本项目 <code>harness/</code>；装 Playwright(<code>npm i -D playwright &amp;&amp; npx playwright install chromium</code>)。</li>
+    <li><code>cp flow-probe.config.example.mjs flow-probe.config.mjs</code>，照 <code>references/adapt-to-new-project.md</code> 填本项目的 <b>urls / 登录端点 / token 键 / 账号 / 系统清单</b>；改 <code>run-stack.sh</code> 顶部 CONFIG(建库/迁移/前后端启动/端口)。</li>
+    <li>对 Claude 说「<b>跑探针 &lt;系统&gt;</b>」→ 本 skill 自动加载方法。</li>
+    <li>照 <code>example-flow-probe.mjs</code> 为该系统写 <code>&lt;code&gt;-flow-probe.mjs</code>(逐流程·落端·浏览器点真按钮·后端回查)。</li>
+    <li><code>bash harness/run-stack.sh &lt;系统&gt;</code> 起隔离栈跑 → 产 <code>harness/reports/report.html</code>。</li>
+    <li>看 report.html 问题清单 → 改产品代码 → 重跑 → findings 转绿。</li>
+  </ol>
+</section>
+
+<section>
+  <h2>⑦ 两个真实例子（为什么这么测有价值）</h2>
+  <div class="good"><b>例A · 正常流程怎么被测</b>：三级审核(撰写→提交→二审→三审→发布)。探针以经办人上下文点「提交审核」→回查审核中；辖区审核员在审核待办点「通过」→办公室审核员点「通过」→回查通过；点「发布」→回查已发布。全程浏览器点真按钮 + 后端坐实，全 PASS。</div>
+  <div class="disc"><b>例B · 测出真 bug 并闭环</b>(接口测试发现不了)：探针要在审核待办页点「通过」办结时，发现<b>该页面只读、根本没有通过按钮</b>——审核员无法在页面办结。判红记根因 → 改产品代码(前端补操作列 + 后端 review 分派) → 重跑 → 转绿。这条只有"逐步骤点真页面"才会暴露。</div>
+</section>
+
+<section>
+  <h2>⑧ 触发词 & 参考实现</h2>
+  <p>对 Claude 说以下任一，即进入本方法：<span class="pill">跑探针 &lt;系统&gt;</span><span class="pill">深探针 &lt;系统&gt;</span><span class="pill">flow-probe &lt;系统&gt;</span><span class="pill">浏览器真流程测试</span><span class="pill">按流程图测业务系统</span></p>
+  <p>参考实现：一个多系统业务平台的 <code>harness/</code>——覆盖多个系统并包含细化流程文档，是本方法的完整落地样板。</p>
+</section>
+
+</main>
+</body></html>

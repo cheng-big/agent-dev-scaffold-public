@@ -1,0 +1,32 @@
+# CLAUDE.md — <项目名> 开发宪法（kando 架构）
+
+> 本文件是本仓库锁定方案，任何会话在本 repo 工作都必须遵守。占位符 <...> 按项目替换。
+
+## 真源
+- 流程 + 权限（RBAC）← <业务流程与权限设计工作台路径>
+- 字段级需求 ← <字段真源：原始PRD / kando架构产物 docs/architecture+blueprints / data-model>
+- 冲突：显式择一（更新/更权威者），标 `[ASSUMPTION 待业务确认]`，默认值≠确认。
+- ⚠️ grounding 必须中立：读真源"它到底定义了什么"，禁止预贴标签。
+
+## 技术栈（锁定）
+Java17 · SpringBoot 3.3.5 · Spring Modulith · MyBatis-Plus(spring-boot3-starter) · Flyway · MySQL <版本，如5.7 本地 <user>/<pwd>，库 <dbname>> · Security+JWT · 前端 Vue3+Vite+TS+ElementPlus+Pinia+router+axios（apps/web）。
+
+## 后端约定
+- 包：`platform.*`（内核/底座）/ `modules.*`（业务）/ `aggregation.*`（只读聚合）。一级包配 package-info。
+- 主键：业务码表用 varchar 业务键 + 代理 id BIGINT，`UNIQUE(业务列, deleted)`；Java 类型 String。
+- 软删统一继承 `common.mybatis.TombstoneIdServiceImpl`（软删置 deleted=id，避二次软删撞唯一键）。
+- 枚举 ENUM（若 MySQL5.7 记得 CHECK 被忽略，用 ENUM）；引用完整性=InnoDB 外键；名称双语 xxx_zh/xxx_bo；审计四列。
+- 引用其它实体存对方主键 FK；引用"业务系统"存业务系统名录 system_code；创建时校验被引存在防孤儿。
+- 操作人身份一律 SecurityContextHolder 取，禁前端传（reviewerId/senderId/receiverId）。
+- Flyway：已应用到真实库的版本禁改（校验和冲突），新增用新版本号；每系统留版本段（如 V60/V70…）。
+
+## 前端约定
+- 模块化路由：每域只加 `src/router/routes/<域>.ts` + `views/<域>/*`，不改共享 router/index.ts、layout；侧栏由 meta.title 聚合。
+- api 走 vite proxy `/api`→后端，axios 注入 Bearer，401 跳登录。
+- ★引用实体一律 el-select 远程下拉（值=业务主键，展示双语名），禁手填 ID。
+
+## 每系统流水线（用 workflows/system-builder.mjs）
+物化spec(docs/product/<系统>/含覆盖矩阵) → 后端 → 编译门 → 前端 → build门 → 真跑冒烟 → 对抗式评审。第0步必物化本地 spec+覆盖矩阵。
+
+## DoD / 纪律
+编译绿 + P0 对抗清零（自报成功不算数，独立复核判定，常需2-4轮）+ 评审过 + 真跑主链路通 + 覆盖矩阵如实（P1/缺口入 backlog）。评审措辞用"业务正确性/数据一致性"避开安全类词触发误判。诚实：编译≠跑通；覆盖高≠没缺口；缺依赖标 stub 不伪造。

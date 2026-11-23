@@ -94,6 +94,7 @@ python3 -m harness_evolver.context_injector --stage CODING --tech-stack "项目�
 ├── PROJECT.md            ← install 生成，按新项目填（committed）
 ├── FEEDBACK-PROTOCOL.md  自动问题登记与关键词触发协议（committed，始终注入）
 ├── process/              方法论脚手架层：process.template.json + README + SKILLS.md（committed）
+├── skills/               项目内置 skill 本体与配套资源（committed；复制后位于 `.agent/skills/`）
 ├── process.json          ← install 从模板生成，按新方法论编辑（committed）
 ├── schemas/              JSON Schema（语言无关，committed）
 ├── scripts/              零依赖 Node CLI + lib + 测试（committed）
@@ -115,16 +116,16 @@ docs/retrospective/
 
 ### 可选 6 —— 用方法论脚手架层（阶段编排 + 强引导 + 看板）
 `install` 已顺带从 `process/process.template.json` 生成 `.agent/process.json`（内置默认 7 阶段方法论）。
-想换方法论**只改 `process.json`**（改 `skills` 指向你用的 skill、`artifacts.path` 指向你项目产物位置），不用改代码。
+想换方法论**只改 `process.json`**（改 `skills` 指向你用的 skill、`artifacts.path` 指向你项目产物位置），不用改代码。默认 skill 已在 `.agent/skills/`，项目内置版本优先于全局版本。
 日常：`process init`（若没跑过 install）→ `next`（看下一步）→ `phase start <id>` → 产出后 `artifact add` → `board` 出看板。
-字段说明见 `process/README.md`；本方法论引用的 skill 清单（**不随模板打包**，是引导指针）见 `process/SKILLS.md`。
+字段说明见 `process/README.md`；本方法论引用的 skill 清单和项目内置目录见 `process/SKILLS.md`。
 
 **把下面这段「方法论脚手架协议」贴进新项目的 `AGENTS.md` / `CLAUDE.md`**（让后续 AI 会话遵守引导闭环）：
 
 ```markdown
 ## 方法论脚手架协议（启用 process 层时，详见 .agent/process/README.md）
 - 开工/接手先跑 `node .agent/scripts/agent.mjs next`，照它给的**唯一下一步**做，不要自己跳阶段。
-- 进入阶段：`phase start <id>`；该阶段该调哪个 skill 见提示（skill 是引导指针，需你显式调用，不自动执行；缺哪个见 process/SKILLS.md）。
+- 进入阶段：`phase start <id>`；该阶段该调哪个 skill 见提示。优先读取 `.agent/skills/<name>/SKILL.md`，需你显式调用，不自动执行；缺哪个见 `process/SKILLS.md`。
 - 每产出一个产物，必须 `artifact add --phase <id> --key <k> --path <真实路径>` 登记 —— **产物真源是磁盘**，登记≠存在，缺失如实标 ✗，不假绿。
 - 每步做完看命令末尾的「下一步 →」；阶段收尾走记忆层硬门（verify + 每条 DoD met+证据 + complete），不凭摘要宣布完成。
 - 要对齐/汇报进度：`board` 生成看板（当前站高亮 + 产出物总账），别手写进度。

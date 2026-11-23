@@ -19,6 +19,11 @@
    cp -R "$T/scripts/." .agent/scripts/     # 覆盖 agent.mjs + lib/（新增 process/board/skills）+ process.test.mjs
    cp -R "$T/schemas/." .agent/schemas/     # 新增 process.schema.json、process-state.schema.json
    cp -R "$T/process"   .agent/             # 新增 process/（process.template.json + README + SKILLS）
+   mkdir -p .agent/skills
+   for skill in "$T"/skills/*; do
+     name="$(basename "$skill")"
+     test -e ".agent/skills/$name" || cp -R "$skill" .agent/skills/
+   done                                      # 新增项目内置 skill，不覆盖项目已有 skill
    cp "$T/README.md" "$T/PORTING.md" "$T/INSTALL-PROMPT.md" "$T/UPGRADE-PROMPT.md" "$T/FEEDBACK-PROTOCOL.md" .agent/
    ```
    注意：源模板里没有运行时数据文件、也没有 `PROJECT.md`/`process.json`，所以上面的 `cp` **不会**碰到我的数据。
@@ -72,7 +77,7 @@
 - **新文件**：`scripts/lib/{process,board,skills,hook,effects,bugimport,repomap,report,feedback,evolution-gate}.mjs`、`scripts/{process,external-effects,bugfix,feedback}.test.mjs`、`schemas/{process,process-state,bug}.schema.json`、`process/`（默认模板+Bugfix模板+README+SKILLS）、`INSTALL-PROMPT.md`、`UPGRADE-PROMPT.md`
 - **改的文件**：`scripts/agent.mjs`（加新命令 + 下一步收口 + 看板地址 + 装 git hook + doctor）、`README.md`、`PORTING.md`
 - **看板增强**：流程 tab「逐系统开发任务清单」矩阵（`worklist` + `system`/`worklist set` 驱动）、任务卡片展开「阶段验收 DoD」、产物/依据路径可点跳转、`post-commit` 提交后自动刷新
-- **方法论**：新增独立阶段「页面契约·约束优先」（原 6→7 阶段），产页面契约 JSON + 渲染 HTML 两份
+- **方法论**：新增独立阶段「页面契约·约束优先」（原 6→7 阶段），产页面契约 JSON + 渲染 HTML 两份；默认 skill 随 `.agent/skills/` 分发
 - **证据硬门**：`external-write` 步骤要求每个目标都有独立上下文持久化回读 PASS；恢复流程也不能绕过。
 - **Bugfix**：源状态/验证状态分离；报告读取 Markdown/JSON/图片/harness evidence，并用 `report check` 拒绝 stale 输出。
 - **Harness Evolver**：历史反馈四阶段归因、规则去重、能力进化报告，以及 `next/context/resume/phase start` 动态注入。

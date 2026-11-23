@@ -119,7 +119,7 @@ hook install                # 装 git post-commit：每次提交后自动刷新 
 - **提交后自动刷新**：`install` / `hook install` 装的 `post-commit` hook 每次 `git commit` 后重跑 `board`，看板即最新态；对已有 hook 幂等、不覆盖。
 - **强引导**：`phase start / artifact add / commit-step / verify / complete / dod set / resume` 成功后都在末尾追加一行 `下一步 → …`，共用纯函数 `computeNext()`。
 - **产物真源=磁盘**：登记只是索引，`next/board/artifact list/process status` 一律 `existsSync` 回读——登记了但文件不在→如实 ✗，不假绿。
-- **skill 只绑定不执行**：`process.json` 里 `skills` 是「该调哪个 skill」的引导指针；看板标 ✓已装/✗未装/?未知，实际起动走正常 Skill 机制。skill 本体**不随模板打包**，清单见 `process/SKILLS.md`（install 完成时会提示缺哪个）。
+- **skill 只绑定不执行**：`process.json` 里 `skills` 是「该调哪个 skill」的引导指针；仓库内置 skill 位于 `.agent/skills/`，看板标 ✓项目内置/✓全局已装/✗未装/?未知。实际起动由 AI 显式读取和调用，清单见 `process/SKILLS.md`。
 - 分层：`process.json`（配置，提交）；`process-state.json` / `board.html`（运行时，忽略）。字段与换方法论见 `process/README.md`。
 - **给 AI 的工作协议**：把 `PORTING.md` 的「方法论脚手架协议」段贴进 `AGENTS.md` / `CLAUDE.md`，让后续会话遵守引导闭环。
 

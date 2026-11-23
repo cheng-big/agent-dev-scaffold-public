@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>防漏开发蓝图 · 页面级原子契约渲染器</title>
+<style>
+*{box-sizing:border-box}
+body{font:14px/1.55 -apple-system,"PingFang SC",sans-serif;margin:0;background:#eef0f4;color:#1f2937}
+header{position:sticky;top:0;z-index:30;background:#0f172a;color:#fff;padding:12px 22px;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+header h1{margin:0;font-size:17px}
+header h1 small{font-weight:400;opacity:.6;font-size:12px;margin-left:8px}
+.stat{display:flex;gap:18px;margin-top:9px;font-size:12.5px;color:#94a3b8;flex-wrap:wrap}
+.stat b{color:#34d399;font-size:14px}
+.tabs{display:flex;gap:8px;margin-top:11px}
+.tab{cursor:pointer;border:1px solid #334155;background:#1e293b;color:#cbd5e1;padding:7px 18px;border-radius:8px 8px 0 0;font-size:14px;font-weight:600;user-select:none}
+.tab.on{background:#fff;color:#0f172a;border-color:#fff}
+.tab .n{font-weight:400;opacity:.7;font-size:12px;margin-left:4px}
+.bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.bar input[type=search]{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:5px 11px;border-radius:6px;width:200px;outline:none}
+.bar button{cursor:pointer;border:1px solid #334155;background:#1e293b;color:#cbd5e1;padding:5px 13px;border-radius:6px}
+.bar button:hover{background:#273449}
+.io{max-width:1500px;margin:14px auto 0;padding:0 18px}
+.io details{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
+.io summary{cursor:pointer;padding:11px 16px;font-weight:700;color:#312e81;background:linear-gradient(180deg,#f5f3ff,#fff);user-select:none}
+.io .iobody{padding:14px 16px}
+.io textarea{width:100%;height:150px;border:1px solid #d6d9e6;border-radius:8px;padding:10px;font-family:ui-monospace,Menlo,monospace;font-size:12px;resize:vertical;outline:none}
+.io .iorow{display:flex;gap:9px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.io .iorow button{cursor:pointer;border:1px solid #cbd5e1;background:#f8fafc;padding:6px 14px;border-radius:6px;font-weight:600}
+.io .iorow button.pri{background:#2563eb;border-color:#2563eb;color:#fff}
+.io .err{color:#b91c1c;font-size:12.5px;font-weight:600}
+.io .drop{margin-top:10px;border:2px dashed #c7cbd9;border-radius:8px;padding:14px;text-align:center;color:#64748b;font-size:12.5px}
+.io .drop.over{border-color:#2563eb;background:#eff6ff;color:#2563eb}
+.pane{display:none}.pane.on{display:block}
+.wrap{max-width:1500px;margin:16px auto;padding:0 18px;display:grid;grid-template-columns:250px 1fr;gap:18px}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}.toc{display:none}}
+.toc{position:sticky;top:140px;align-self:start;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:10px 8px;max-height:calc(100vh - 160px);overflow:auto}
+.toc .tt{font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:.05em;padding:4px 8px 8px}
+.toc .gh{font-size:11.5px;font-weight:800;color:#4338ca;padding:9px 8px 5px;margin-top:6px;border-top:1px solid #eef0f4;display:flex;align-items:center;gap:5px}
+.toc .gh:first-of-type{border-top:none;margin-top:0}
+.toc a{display:block;padding:5px 9px 5px 22px;border-radius:6px;color:#374151;text-decoration:none;font-size:12.5px;border-left:3px solid transparent}
+.toc a:hover{background:#f3f4f6}
+.toc a.on{background:#eef2ff;color:#4338ca;border-left-color:#4f46e5;font-weight:600}
+.toc a .rp{display:block;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#94a3b8;margin-top:1px}
+.toc a .smdot{color:#7c3aed;font-weight:700;margin-left:3px}
+.gband{display:flex;align-items:center;gap:10px;margin:26px 0 12px}
+.gband:first-child{margin-top:4px}
+.gband h2{margin:0;font-size:16px;color:#0f172a;font-weight:800;border-left:5px solid #4f46e5;padding-left:11px}
+.gband .gcount{font-size:12px;color:#94a3b8;font-weight:600;background:#fff;border-radius:20px;padding:2px 11px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card{background:#fff;border-radius:12px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;scroll-margin-top:140px}
+.eh{padding:13px 18px;background:linear-gradient(180deg,#f5f3ff,#fff);border-bottom:1px solid #ececf2}
+.et{font-size:15px;font-weight:700;color:#312e81}
+.et .lv{font-size:11px;font-weight:700;color:#6366f1;background:#e0e7ff;border-radius:4px;padding:1px 7px;margin-right:8px;vertical-align:middle}
+.et .rp{font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:600;color:#4f46e5;background:#e0e7ff;padding:2px 9px;border-radius:5px;margin-left:8px}
+.et .ref{font-size:11px;font-weight:600;color:#92400e;background:#fef3c7;padding:2px 8px;border-radius:5px;margin-left:6px}
+.et .smtag{font-size:11px;font-weight:600;color:#fff;background:#7c3aed;border-radius:5px;padding:2px 8px;margin-left:6px}
+.gp{font-size:11.5px;color:#94a3b8;margin-top:4px}
+.sec{padding:6px 18px 14px}
+.seclabel{display:flex;align-items:center;gap:7px;font-weight:700;font-size:12.5px;margin:14px 0 8px;color:#3730a3}
+.seclabel .ico{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:6px;font-size:12px}
+.seclabel .ico.d{background:#dbeafe;color:#1d4ed8}
+.seclabel .ico.a{background:#dcfce7;color:#15803d}
+.seclabel .ico.i{background:#fef9c3;color:#a16207}
+.seclabel .ico.s{background:#e0e7ff;color:#4338ca}
+.seclabel .cnt{font-weight:400;color:#9ca3af;font-size:12px}
+.empty{color:#9ca3af;font-size:12.5px;padding:4px 0 6px;font-style:italic}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t th,table.t td{border:1px solid #eef0f2;padding:7px 10px;text-align:left;vertical-align:top}
+table.t th{background:#f9fafb;color:#6b7280;font-weight:600;white-space:nowrap}
+table.t td.rk{color:#64748b}
+.badge{display:inline-block;color:#fff;border-radius:4px;padding:1px 8px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge.t-str{background:#64748b}.badge.t-enum{background:#7c3aed}.badge.t-num{background:#2563eb}
+.badge.t-date{background:#0891b2}.badge.t-bool{background:#ea580c}.badge.t-other{background:#475569}
+.badge.a-pri{background:#2563eb}.badge.a-tbl{background:#7c3aed}.badge.a-danger{background:#dc2626}
+.badge.a-other{background:#64748b}
+.badge.comp{background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe}
+.req{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:4px}
+.req.y{background:#fee2e2;color:#b91c1c}.req.n{background:#f1f5f9;color:#64748b}
+.perm{display:inline-block;font-size:11px;color:#7c3aed;background:#f3e8ff;border-radius:4px;padding:1px 7px;font-weight:600}
+.flag{color:#b45309;font-weight:600}
+.st{display:inline-block;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;border-radius:5px;padding:1px 8px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.st.to{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.act{font-size:12px;color:#7c3aed;font-weight:600}
+.initb{font-size:11px;font-weight:600;color:#4338ca;background:#eef2ff;border-radius:4px;padding:1px 7px;margin-left:6px}
+.card.hide{display:none}.gband.hide{display:none}
+/* 状态机全景 Tab */
+.smwrap{max-width:1500px;margin:16px auto;padding:0 18px}
+.smcard{background:#fff;border-radius:12px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
+.smhd{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:12px 18px;background:linear-gradient(180deg,#f5f3ff,#fff);border-bottom:1px solid #ececf2}
+.smhd .ent{font-size:15px;font-weight:700;color:#312e81}
+.smhd .smsrc{font-size:11.5px;font-weight:600;color:#4f46e5;background:#e0e7ff;border-radius:5px;padding:2px 9px}
+.smhd .cnt{margin-left:auto;font-size:12px;color:#94a3b8;font-weight:600}
+.nodata{max-width:1500px;margin:40px auto;padding:0 18px;text-align:center;color:#94a3b8}
+.nodata h2{color:#475569}
+@media print{header,.io{display:none!important}.pane{display:block!important}.wrap{grid-template-columns:1fr;margin:0}.toc{display:none}.card,.smcard{break-inside:avoid;box-shadow:none;border:1px solid #e5e7eb}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🗺️ 防漏开发蓝图<small>页面级原子契约 · blueprint_render</small></h1>
+  <div class="stat" id="stat"></div>
+  <div class="tabs">
+    <div class="tab on" data-pane="contract">📋 页面契约</div>
+    <div class="tab" data-pane="sm">⚙️ 状态机全景<span class="n" id="smtabn"></span></div>
+  </div>
+  <div class="bar" id="bar">
+    <input type="search" id="q" placeholder="按菜单名 / 路由 / 字段过滤…">
+    <button id="expandIo">📥 加载 / 粘贴 JSON</button>
+    <button id="sample">👁 载入示例</button>
+    <button onclick="window.print()">🖨 打印</button>
+  </div>
+</header>
+
+<div class="io">
+  <details id="ioPanel">
+    <summary>📥 数据源：粘贴阶段二 JSON 数组，或拖入 .json 文件</summary>
+    <div class="iobody">
+      <textarea id="jsonInput" placeholder='[ { "menu_group": "一级菜单", "page_menu_name": "二级菜单", "route_path": "...", "reference_section": "...", "atomic_contract": {...}, "state_machine": {...} } ]'></textarea>
+      <div class="iorow">
+        <button class="pri" id="renderBtn">▶ 渲染蓝图</button>
+        <button id="fileBtn">📂 选择文件</button>
+        <input type="file" id="fileInput" accept=".json,application/json" hidden>
+        <span class="err" id="err"></span>
+      </div>
+      <div class="drop" id="drop">把阶段二输出的 <b>.json</b> 文件拖到这里</div>
+    </div>
+  </details>
+</div>
+
+<div id="content"></div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+
+const SAMPLE = [
+  {
+    menu_group: "场馆资源管理",
+    page_menu_name: "价格方案管理",
+    route_path: "/venue/pricing",
+    reference_section: "§5.5.3.3.9",
+    atomic_contract: {
+      data_view: [
+        {field: "方案编号", type: "String", remark: "列表展示项"},
+        {field: "生效状态", type: "Enum", remark: "状态机变色：草稿/启用中/停用"}
+      ],
+      action_view: [{action_name: "新增方案", type: "Primary Button", permission: "运营专员", remark: "弹出表单"}],
+      input_view: [{input_label: "方案名称", component: "Input", required: true, remark: ""}]
+    },
+    state_machine: {
+      entity: "价格方案", initial: "草稿",
+      transitions: [
+        {from: "草稿", action: "启用", to: "启用中", guard: ""},
+        {from: "启用中", action: "停用", to: "已停用", guard: "停用后禁被新订单引用"}
+      ]
+    }
+  }
+];
+
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+
+function dataTypeClass(t){
+  const s = String(t||"").toLowerCase();
+  if(/enum|状态|枚举/.test(s)) return "t-enum";
+  if(/number|int|float|num|金额|数值|倍率/.test(s)) return "t-num";
+  if(/date|time|日期|时间/.test(s)) return "t-date";
+  if(/bool|是否|开关/.test(s)) return "t-bool";
+  if(/string|str|文本|字符/.test(s)) return "t-str";
+  return "t-other";
+}
+function actTypeClass(t){
+  const s = String(t||"").toLowerCase();
+  if(/primary|主要|新增/.test(s)) return "a-pri";
+  if(/table|行内/.test(s)) return "a-tbl";
+  if(/danger|删除|危险|警告/.test(s)) return "a-danger";
+  return "a-other";
+}
+const hot = s => /状态机|变色|高原|唯一性|穿透|跨系统|预警|不可|必须|禁|藏汉|双语|父级|防断链|防兜底|金额链路/.test(String(s||""));
+function remarkHtml(s){ if(!s) return ''; return hot(s) ? '<span class="flag">⚑ '+esc(s)+'</span>' : esc(s); }
+
+function smRows(sm){
+  return sm.transitions.map(t =>
+    '<tr><td><span class="st">'+esc(t.from)+'</span></td>'+
+    '<td class="act">'+esc(t.action||'')+'</td>'+
+    '<td>→ <span class="st to">'+esc(t.to)+'</span></td>'+
+    '<td class="rk">'+(t.guard?'<span class="flag">⚑ '+esc(t.guard)+'</span>':'')+'</td></tr>').join('');
+}
+const SM_THEAD = '<thead><tr><th style="width:140px">当前态</th><th style="width:180px">触发动作</th><th style="width:140px">跃迁后</th><th>隐藏/禁用约束</th></tr></thead>';
+
+let DATA = [];
+
+function buildCard(p, i){
+  const c = p.atomic_contract || {};
+  const dv = c.data_view||[], av = c.action_view||[], iv = c.input_view||[];
+  const id = "pg-"+i;
+  const name = esc(p.page_menu_name||"(未命名页面)");
+  const rp = p.route_path ? '<span class="rp">'+esc(p.route_path)+'</span>' : '';
+  const ref = p.reference_section ? '<span class="ref">'+esc(p.reference_section)+'</span>' : '';
+  const smtag = p.state_machine ? '<span class="smtag">⚙️ 状态机</span>' : '';
+
+  const dRows = dv.length ? dv.map(f =>
+    '<tr><td><b>'+esc(f.field)+'</b></td><td><span class="badge '+dataTypeClass(f.type)+'">'+esc(f.type||"-")+'</span></td><td class="rk">'+remarkHtml(f.remark)+'</td></tr>').join('') : '';
+  const dHtml = dv.length ? '<table class="t"><thead><tr><th>字段</th><th style="width:120px">类型</th><th>备注</th></tr></thead><tbody>'+dRows+'</tbody></table>' : '<div class="empty">无展示字段</div>';
+
+  const aRows = av.length ? av.map(a =>
+    '<tr><td><b>'+esc(a.action_name)+'</b></td><td><span class="badge '+actTypeClass(a.type)+'">'+esc(a.type||"-")+'</span></td><td>'+(a.permission?'<span class="perm">'+esc(a.permission)+'</span>':'<span class="rk">-</span>')+'</td><td class="rk">'+remarkHtml(a.remark)+'</td></tr>').join('') : '';
+  const aHtml = av.length ? '<table class="t"><thead><tr><th>动作</th><th style="width:130px">类型</th><th style="width:110px">权限</th><th>备注</th></tr></thead><tbody>'+aRows+'</tbody></table>' : '<div class="empty">无独立操作</div>';
+
+  const iRows = iv.length ? iv.map(n =>
+    '<tr><td><b>'+esc(n.input_label)+'</b></td><td><span class="badge comp">'+esc(n.component||"-")+'</span></td><td>'+(n.required?'<span class="req y">必填</span>':'<span class="req n">选填</span>')+'</td><td class="rk">'+remarkHtml(n.remark)+'</td></tr>').join('') : '';
+  const iHtml = iv.length ? '<table class="t"><thead><tr><th>输入项</th><th style="width:140px">组件</th><th style="width:70px">必填</th><th>校验/备注</th></tr></thead><tbody>'+iRows+'</tbody></table>' : '<div class="empty">无表单 / 搜索输入</div>';
+
+  const search = ((p.menu_group||'')+' '+name+' '+(p.route_path||'')+' '+dv.map(f=>f.field).join(' ')+' '+av.map(a=>a.action_name).join(' ')+' '+iv.map(n=>n.input_label).join(' ')).toLowerCase();
+
+  return '<section class="card" id="'+id+'" data-search="'+esc(search)+'">'+
+      '<div class="eh"><div class="et"><span class="lv">二级</span>'+name+rp+ref+smtag+'</div>'+
+      (p.menu_group?'<div class="gp">📂 '+esc(p.menu_group)+'</div>':'')+'</div>'+
+      '<div class="sec">'+
+        '<div class="seclabel"><span class="ico d">📊</span>数据视图 <span class="cnt">'+dv.length+' 字段</span></div>'+dHtml+
+        '<div class="seclabel"><span class="ico a">⚡</span>操作视图 <span class="cnt">'+av.length+' 动作</span></div>'+aHtml+
+        '<div class="seclabel"><span class="ico i">✍️</span>输入视图 <span class="cnt">'+iv.length+' 输入项 · '+iv.filter(x=>x&&x.required).length+' 必填</span></div>'+iHtml+
+      '</div>'+
+    '</section>';
+}
+
+function buildSmPane(data){
+  const withSm = data.map((p,i)=>({p,i})).filter(x=>x.p.state_machine && Array.isArray(x.p.state_machine.transitions) && x.p.state_machine.transitions.length);
+  if(!withSm.length) return '<div class="nodata"><h2>本蓝图未挂载状态机</h2><p>给页面对象加 <code>state_machine</code> 字段即可在此集中展示流转矩阵。</p></div>';
+  const groups = new Map();
+  withSm.forEach(({p,i}) => { const g=p.menu_group||"未分组"; if(!groups.has(g)) groups.set(g,[]); groups.get(g).push({p,i}); });
+  let html = '<div class="smwrap">';
+  for(const [g, items] of groups){
+    html += '<div class="gband"><h2>'+esc(g)+'</h2><span class="gcount">'+items.length+' 个状态机</span></div>';
+    items.forEach(({p}) => {
+      const sm = p.state_machine;
+      html += '<div class="smcard"><div class="smhd"><span class="ent">⚙️ '+esc(sm.entity||'')+'</span>'+
+        '<span class="smsrc">来源：'+esc(p.page_menu_name||'')+'</span>'+
+        (sm.initial?'<span class="initb">初始：'+esc(sm.initial)+'</span>':'')+
+        '<span class="cnt">'+sm.transitions.length+' 转移</span></div>'+
+        '<table class="t sm">'+SM_THEAD+'<tbody>'+smRows(sm)+'</tbody></table></div>';
+    });
+  }
+  return html + '</div>';
+}
+
+function render(list){
+  DATA = Array.isArray(list) ? list : [];
+  const content = $("#content");
+  if(!DATA.length){
+    content.innerHTML = '<div class="nodata"><h2>暂无蓝图数据</h2><p>点击右上角「载入示例」预览，或在上方面板粘贴/拖入阶段二 JSON 后点「渲染蓝图」。</p></div>';
+    $("#stat").innerHTML = ''; $("#smtabn").textContent='';
+    return;
+  }
+  const groups = new Map();
+  DATA.forEach((p,i) => { const g=p.menu_group||"未分组"; if(!groups.has(g)) groups.set(g,[]); groups.get(g).push({p,i}); });
+
+  let fields=0, acts=0, reqs=0, smN=0, smTr=0;
+  DATA.forEach(p => {
+    const c = p.atomic_contract||{};
+    fields += (c.data_view||[]).length;
+    acts += (c.action_view||[]).length;
+    reqs += (c.input_view||[]).filter(x=>x&&x.required).length;
+    if(p.state_machine && p.state_machine.transitions){ smN++; smTr += p.state_machine.transitions.length; }
+  });
+
+  const tocParts = [], mainParts = [];
+  for(const [g, items] of groups){
+    tocParts.push('<div class="gh">📂 '+esc(g)+' <span style="color:#94a3b8;font-weight:600">('+items.length+')</span></div>');
+    items.forEach(({p,i}) => {
+      tocParts.push('<a href="#pg-'+i+'">'+esc(p.page_menu_name||'')+(p.state_machine?'<span class="smdot">⚙️</span>':'')+(p.route_path?'<span class="rp">'+esc(p.route_path)+'</span>':'')+'</a>');
+    });
+    mainParts.push('<div class="gband"><h2>'+esc(g)+'</h2><span class="gcount">'+items.length+' 个二级页面</span></div>');
+    items.forEach(({p,i}) => mainParts.push(buildCard(p, i)));
+  }
+
+  $("#stat").innerHTML =
+    '一级菜单 <b>'+groups.size+'</b> 组 · 二级页面 <b>'+DATA.length+'</b> · 字段 <b>'+fields+'</b> · 操作 <b>'+acts+'</b> · 状态机 <b>'+smN+'</b> · 转移 <b>'+smTr+'</b>';
+  $("#smtabn").textContent = smN ? '('+smN+')' : '';
+
+  content.innerHTML =
+    '<div class="pane on" id="pane-contract"><div class="wrap"><nav class="toc"><div class="tt">菜单导航 · 防漏核对</div>'+tocParts.join('')+'</nav><div class="main">'+mainParts.join('')+'</div></div></div>'+
+    '<div class="pane" id="pane-sm">'+buildSmPane(DATA)+'</div>';
+
+  // 还原当前 tab
+  const active = document.querySelector('.tab.on');
+  switchPane(active ? active.dataset.pane : 'contract');
+  wireToc();
+}
+
+function switchPane(name){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.pane===name));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id==='pane-'+name));
+  $("#bar").style.visibility = (name==='contract') ? 'visible' : 'hidden';
+}
+
+function wireToc(){
+  const links = [...document.querySelectorAll('.toc a')];
+  const cards = [...document.querySelectorAll('#pane-contract .card')];
+  if(!('IntersectionObserver' in window) || !cards.length) return;
+  const io = new IntersectionObserver(es => {
+    es.forEach(e => { if(e.isIntersecting){ links.forEach(l => l.classList.toggle('on', l.getAttribute('href') === '#'+e.target.id)); } });
+  }, {rootMargin:'-140px 0px -70% 0px'});
+  cards.forEach(c => io.observe(c));
+}
+
+function applyFilter(){
+  const kw = $("#q").value.trim().toLowerCase();
+  document.querySelectorAll('#pane-contract .card').forEach(c => { c.classList.toggle('hide', kw && !c.dataset.search.includes(kw)); });
+  document.querySelectorAll('#pane-contract .gband').forEach(b => {
+    let n=b.nextElementSibling, any=false;
+    while(n && n.classList.contains('card')){ if(!n.classList.contains('hide')) any=true; n=n.nextElementSibling; }
+    b.classList.toggle('hide', !any);
+  });
+}
+
+function loadFromText(txt){
+  $("#err").textContent = "";
+  let data;
+  try{ data = JSON.parse(txt); } catch(e){ $("#err").textContent = "JSON 解析失败：" + e.message; return; }
+  if(!Array.isArray(data)){ $("#err").textContent = "顶层必须是 JSON 数组 [...]"; return; }
+  render(data);
+  $("#ioPanel").open = false;
+}
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchPane(t.dataset.pane)));
+$("#renderBtn").addEventListener('click', () => loadFromText($("#jsonInput").value));
+$("#sample").addEventListener('click', () => { render(SAMPLE); $("#jsonInput").value = JSON.stringify(SAMPLE,null,2); });
+$("#expandIo").addEventListener('click', () => { $("#ioPanel").open = true; $("#jsonInput").focus(); });
+$("#q").addEventListener('input', applyFilter);
+$("#fileBtn").addEventListener('click', () => $("#fileInput").click());
+$("#fileInput").addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader(); r.onload = () => { $("#jsonInput").value = r.result; loadFromText(r.result); }; r.readAsText(f);
+});
+const drop = $("#drop");
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => {
+  const f = e.dataTransfer.files[0]; if(!f) return;
+  const r = new FileReader(); r.onload = () => { $("#jsonInput").value = r.result; loadFromText(r.result); }; r.readAsText(f);
+});
+
+render([]);
+</script>
+</body>
+</html>

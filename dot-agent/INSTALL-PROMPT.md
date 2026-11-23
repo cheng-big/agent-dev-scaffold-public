@@ -14,7 +14,7 @@
    cp -r <模板仓库路径>/harness_evolver ./harness_evolver
    ```
 3. **安装**（幂等）：开发项目运行 `node .agent/scripts/agent.mjs install`；以修 Bug 为主的项目运行 `node .agent/scripts/agent.mjs install --workflow bugfix`。
-   —— 它会建运行时目录、生成 `.agent/PROJECT.md` 与 `.agent/process.json`、追加 `.gitignore`，并检测方法论引用的 skill 装没装。
+   —— 它会建运行时目录、生成 `.agent/PROJECT.md` 与 `.agent/process.json`、保留 `.agent/skills/` 项目内置 skill、追加 `.gitignore`，并检测方法论引用的 skill 是否可用。
 4. **自测**：
    ```bash
    node --test .agent/scripts/*.test.mjs
@@ -25,7 +25,7 @@
 6. **确认协议**：检查 `install` 是否在项目根 `AGENTS.md` 注册 Harness 区块，并保留原有规则。具体 Bug 按区块规定先登记，不需要用户另行提醒。
 7. **对齐方法论**：打开 `.agent/process.json`——
    - 把阶段 01 `inputs` 里需求文档的 `path` 改成本项目真实路径：`<需求文档路径>`；
-   - 若默认 7 阶段（读懂需求→逆向设计→页面契约→夯实地基→逐系统建造→做实验证→交付复盘）不适用本项目，改 `phases`（阶段 / `skills` / `artifacts.path`）换成本项目的方法论。字段说明见 `.agent/process/README.md`，用到的 skill 见 `.agent/process/SKILLS.md`。
+   - 若默认 7 阶段（读懂需求→逆向设计→页面契约→夯实地基→逐系统建造→做实验证→交付复盘）不适用本项目，改 `phases`（阶段 / `skills` / `artifacts.path`）换成本项目的方法论。字段说明见 `.agent/process/README.md`，用到的 skill 见 `.agent/process/SKILLS.md`，本体优先读 `.agent/skills/<name>/SKILL.md`。
    - 若选择 Bugfix，把 `intake` 输入改成真实 Bug 清单；无清单时用 `bug add` 登记。
    - 若已存在 `docs/retrospective/项目复盘待办.md` 但没有 `feedback.jsonl`，先运行 `node .agent/scripts/agent.mjs feedback import --file docs/retrospective/项目复盘待办.md`；CLI 会备份旧原文后再切换为结构化账本，禁止直接覆盖。
 8. **确认反馈外循环**：运行 `python3 -m harness_evolver.context_injector --stage REQUIREMENT`，输出必须包含「历史交付质量反馈」和 Stage 1；已有本项目反馈文档时，登记其路径但不要擅自发送给外部 LLM。

@@ -156,18 +156,34 @@ test('P4. computePhaseView 产物磁盘回读：登记但缺失判 ✗，存在�
   assert.equal(v.artifacts[0].on_disk, true);
 });
 
-test('P5. detectSkill：命中判 installed，缺失判 not_found', () => {
+test('P5. 项目内置 skill 优先于全局探测，并支持插件名称', () => {
   const { home } = freshHome();
-  const cwd = dirname(home); // <base>，其下建 .claude/skills
-  const skDir = join(cwd, '.claude', 'skills', 'foo');
+  const cwd = dirname(home);
+  const skDir = join(cwd, '.agent', 'skills', 'foo');
   mkdirSync(skDir, { recursive: true });
   writeFileSync(join(skDir, 'SKILL.md'), '# foo');
   assert.equal(skills.detectSkill('foo', { cwd }), 'installed');
+  assert.deepEqual(skills.skillInfo('foo', { cwd }), { state: 'installed', source: 'project' });
+  mkdirSync(join(cwd, '.claude', 'skills', 'agent-skill'), { recursive: true });
+  writeFileSync(join(cwd, '.claude', 'skills', 'agent-skill', 'SKILL.md'), '# agent skill');
+  assert.equal(skills.detectSkill('agent-skills:agent-skill', { cwd }), 'installed');
   assert.equal(skills.detectSkill('zzz-nonexistent-skill-xyz', { cwd }), 'not_found');
+});
+
+test('P5a. 默认开发和 Bugfix 流程的 skill 都有项目内置本体', () => {
+  const templateRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const names = new Set();
+  for (const file of ['process/process.template.json', 'process/bugfix.template.json']) {
+    const processFile = JSON.parse(readFileSync(join(templateRoot, file), 'utf8'));
+    for (const phase of processFile.phases) for (const name of phase.skills || []) names.add(name.split(':').at(-1));
+  }
+  for (const name of names) assert.ok(existsSync(join(templateRoot, 'skills', name, 'SKILL.md')), `${name} 缺少 SKILL.md`);
 });
 
 test('P6. buildBoardHtml 含全部阶段名/产物 desc/skillband 徽章/当前站高亮/缺失标记', () => {
   const { home } = freshHome();
+  mkdirSync(join(dirname(home), '.agent', 'skills', 'skill-a'), { recursive: true });
+  writeFileSync(join(dirname(home), '.agent', 'skills', 'skill-a', 'SKILL.md'), '# skill-a');
   const p = writeProcess(home, makeProcess(home));
   const st = proc.freshState(p);
   proc.seedPhaseTask(p, 'p1', st); // current_phase=p1
@@ -184,6 +200,7 @@ test('P6. buildBoardHtml 含全部阶段名/产物 desc/skillband 徽章/当前�
   assert.match(html, /— 未产出/);            // p2 产物未产出
   assert.match(html, /输入真源/);            // 阶段展示输入真源
   assert.match(html, /prd\.pdf/);            // 需求文档路径
+  assert.match(html, /✓项目内置/);
   // 双 tab 解耦
   assert.match(html, /data-t="flow"/);       // 流程 tab
   assert.match(html, /data-t="mem"/);        // 记忆 tab

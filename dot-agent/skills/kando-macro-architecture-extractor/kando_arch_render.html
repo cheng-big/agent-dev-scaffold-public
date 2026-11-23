@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>全栈蓝图看板 · 架构 / 页面契约 / 探针</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{font:14px/1.55 -apple-system,"PingFang SC",sans-serif;margin:0;background:#eef0f4;color:#1f2937}
+header{position:sticky;top:0;z-index:30;background:#0f172a;color:#fff;padding:12px 22px;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+header h1{margin:0;font-size:17px}
+.bar{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
+.layer{cursor:pointer;border:1px solid #475569;background:#334155;color:#fff;padding:6px 16px;border-radius:8px;font-weight:700;font-size:13px}
+.layer.on{background:#22d3ee;color:#0f172a;border-color:#22d3ee}
+#syssel{padding:6px 12px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;font-size:13px;min-width:220px}
+.tabs{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+.tab{cursor:pointer;border:1px solid #334155;background:#1e293b;color:#cbd5e1;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600}
+.tab.on{background:#fff;color:#0f172a;border-color:#fff}
+.io{max-width:1400px;margin:14px auto 0;padding:0 18px}
+.io details{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.io summary{cursor:pointer;padding:11px 16px;font-weight:700;color:#312e81}
+.io textarea{width:100%;height:120px;border:1px solid #d6d9e6;border-radius:8px;padding:10px;font-family:ui-monospace,Menlo,monospace;font-size:12px;margin:10px 0}
+.io button{cursor:pointer;border:1px solid #2563eb;background:#2563eb;color:#fff;padding:6px 16px;border-radius:6px;font-weight:600}
+.io .err{color:#b91c1c;font-weight:600;margin-left:10px}
+.wrap{max-width:1400px;margin:16px auto;padding:0 18px}
+.alert{background:#fef2f2;border:1px solid #fecaca;border-left:5px solid #ef4444;border-radius:8px;padding:10px 14px;margin-bottom:10px;color:#991b1b;font-weight:600}
+.card{background:#fff;border-radius:12px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
+.ch{padding:11px 16px;background:linear-gradient(180deg,#f5f3ff,#fff);border-bottom:1px solid #ececf2;font-weight:700;color:#312e81}
+.cb{padding:12px 16px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border:1px solid #eef0f4;padding:7px 10px;text-align:left;vertical-align:top}
+th{background:#f8fafc;color:#475569;font-weight:700}
+.badge{display:inline-block;background:#e0e7ff;color:#4338ca;border-radius:5px;padding:1px 8px;font-size:11px;font-weight:600}
+.src{font-size:11px;color:#92400e;background:#fef3c7;border-radius:5px;padding:1px 7px}
+.tree .l1{font-weight:800;color:#0f172a;margin:12px 0 4px;border-left:4px solid #4f46e5;padding-left:9px}
+.tree .l2{font-weight:600;color:#3730a3;margin:6px 0 2px 14px}
+.tree .l3{margin:3px 0 3px 30px;color:#374151}
+.tree .l3 .d{color:#64748b;font-size:12px}
+.flow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.flow .seg{background:#f1f5f9;border-radius:6px;padding:5px 10px;font-size:12px}
+.flow .seg b{color:#4338ca}
+.flow .ar{color:#94a3b8;font-weight:700}
+.mer{background:#fff;border-radius:10px;padding:14px;overflow:hidden;position:relative;height:600px}
+.mer svg{transform-origin:0 0;cursor:grab;max-width:none!important}
+.mer:fullscreen{height:100vh;width:100vw;padding:24px}
+.mer-ctl{position:absolute;top:10px;right:12px;display:flex;gap:6px;z-index:5}
+.mer-ctl button{width:30px;height:30px;border:1px solid #cbd5e1;background:#fff;color:#334155;border-radius:7px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.12);line-height:1}
+.mer-ctl button:hover{background:#eef2ff;border-color:#6366f1;color:#4338ca}
+.mer-hint{position:absolute;left:14px;bottom:8px;font-size:11px;color:#94a3b8}
+.nodata{color:#94a3b8;padding:30px;text-align:center}
+.views{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px}
+@media(max-width:900px){.views{grid-template-columns:1fr}}
+.vbox{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:8px}
+.vbox h4{margin:0 0 6px;font-size:12px;color:#475569;font-weight:700}
+.vbox table{font-size:12px}
+.sm{margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px}
+.sm .guard{color:#b91c1c;font-weight:600}
+.tag{display:inline-block;border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600;margin-right:4px}
+.tag.s{background:#dbeafe;color:#1e40af}
+.tag.e{background:#fee2e2;color:#991b1b}
+.tag.r{background:#dcfce7;color:#166534}
+.stage{border-left:5px solid #94a3b8;padding:8px 12px;margin:8px 0;border-radius:6px;background:#f8fafc}
+.stage.s1{border-color:#ef4444}.stage.s2{border-color:#f59e0b}.stage.s3{border-color:#3b82f6}.stage.s4{border-color:#8b5cf6}.stage.s5{border-color:#10b981}
+.stage .st{font-weight:700;margin-bottom:4px}
+.chk{font-size:12px;padding:4px 0;border-top:1px dashed #e5e7eb}
+.probe{font-family:ui-monospace,Menlo,monospace;background:#1e293b;color:#fbbf24;border-radius:5px;padding:1px 7px;font-size:11px}
+/* 页面契约层:左菜单导航 */
+.bp-stat{display:flex;gap:16px;flex-wrap:wrap;color:#475569;font-size:12.5px;margin-bottom:10px}.bp-stat b{color:#4f46e5;font-size:14px}
+.bp-wrap{display:grid;grid-template-columns:230px 1fr;gap:16px}
+@media(max-width:900px){.bp-wrap{grid-template-columns:1fr}.bp-toc{display:none}}
+.bp-toc{position:sticky;top:160px;align-self:start;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:10px 8px;max-height:calc(100vh - 190px);overflow:auto}
+.bp-tt{font-size:11px;font-weight:700;color:#9ca3af;padding:4px 8px 8px}
+.bp-gh{font-size:11.5px;font-weight:800;color:#4338ca;padding:9px 8px 5px;border-top:1px solid #eef0f4}
+.bp-toc a{display:block;padding:5px 9px 5px 18px;border-radius:6px;color:#374151;text-decoration:none;font-size:12.5px}
+.bp-toc a:hover{background:#f3f4f6}
+.bp-rp{display:block;font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:#94a3b8}
+.bp-gband{display:flex;align-items:center;gap:10px;margin:20px 0 12px}
+.bp-gband h2{margin:0;font-size:16px;color:#0f172a;font-weight:800;border-left:5px solid #4f46e5;padding-left:11px}
+.bp-gcount{font-size:12px;color:#94a3b8;font-weight:600;background:#fff;border-radius:20px;padding:2px 11px}
+.bp-card{background:#fff;border-radius:12px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden;scroll-margin-top:160px}
+.bp-eh{padding:13px 18px;background:linear-gradient(180deg,#f5f3ff,#fff);border-bottom:1px solid #ececf2}
+.bp-lv{font-size:11px;font-weight:700;color:#6366f1;background:#e0e7ff;border-radius:4px;padding:1px 7px;margin-right:8px}
+.bp-et{font-size:15px;font-weight:700;color:#312e81}
+.bp-rp2{font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:600;color:#4f46e5;background:#e0e7ff;padding:2px 9px;border-radius:5px;margin-left:8px}
+.bp-ref{font-size:11px;font-weight:600;color:#92400e;background:#fef3c7;padding:2px 8px;border-radius:5px;margin-left:6px}
+.bp-smtag{font-size:11px;font-weight:600;color:#fff;background:#7c3aed;border-radius:5px;padding:2px 8px;margin-left:6px}
+.bp-sec{padding:6px 18px 14px}
+.bp-sl{display:flex;align-items:center;gap:7px;font-weight:700;font-size:12.5px;margin:14px 0 8px;color:#3730a3}
+.bp-ico{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:6px;font-size:12px}
+.bp-ico.d{background:#dbeafe}.bp-ico.a{background:#dcfce7}.bp-ico.i{background:#fef9c3}.bp-ico.s{background:#e0e7ff}
+.bp-cnt{font-weight:400;color:#9ca3af;font-size:12px}
+table.bp-t{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:4px}
+table.bp-t th,table.bp-t td{border:1px solid #eef0f2;padding:6px 10px;text-align:left;vertical-align:top}
+table.bp-t th{background:#f9fafb;color:#6b7280;font-weight:600}
+.bp-badge{display:inline-block;color:#fff;border-radius:4px;padding:1px 8px;font-size:11px;font-weight:600;background:#64748b}
+.bp-badge.t-enum{background:#7c3aed}.bp-badge.t-num{background:#2563eb}.bp-badge.t-date{background:#0891b2}.bp-badge.t-bool{background:#ea580c}
+.bp-badge.comp{background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe}
+.bp-req{font-size:11px;font-weight:700;padding:1px 7px;border-radius:4px}.bp-req.y{background:#fee2e2;color:#b91c1c}.bp-req.n{background:#f1f5f9;color:#64748b}
+.bp-perm{font-size:11px;color:#7c3aed;background:#f3e8ff;border-radius:4px;padding:1px 7px;font-weight:600}
+.bp-stt{display:inline-block;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;border-radius:5px;padding:1px 8px;font-size:11.5px;font-weight:600}.bp-stt.to{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.bp-act{font-size:12px;color:#7c3aed;font-weight:600}.bp-flag{color:#b45309;font-weight:600;font-size:12px}
+.bp-rmk{color:#b45309;font-weight:600}
+/* 探针层:双Tab */
+.pr-tabs{display:flex;gap:8px;margin-bottom:14px}
+.pr-tab{cursor:pointer;border:1px solid #c7d2fe;background:#eef2ff;color:#4338ca;padding:7px 18px;border-radius:8px;font-size:14px;font-weight:600}
+.pr-tab.on{background:#2563eb;color:#fff;border-color:#2563eb}
+.pr-ov{background:#fff;border-radius:12px;padding:18px 22px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:18px}
+.pr-ov h2{margin:0 0 12px;font-size:17px;color:#0f172a;border-left:5px solid #2563eb;padding-left:11px}
+.pr-strat{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:#92400e;line-height:1.6}
+.pr-lab{font-weight:700;color:#b45309;display:block;margin-bottom:6px}
+.pr-goal{font-size:13px;margin:6px 0 12px;color:#374151}
+.pr-flowhd{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.pr-flowname{font-weight:700;font-size:13.5px;color:#0f172a}
+.pr-flowsrc{font-weight:700;color:#fff;background:#6366f1;font-size:11px;padding:2px 8px;border-radius:5px}
+.pr-seclabel{font-weight:700;font-size:13px;color:#3730a3;margin:16px 0 9px;padding-bottom:5px;border-bottom:1px dashed #d6d9e6}
+.pr-flow{background:#f8fafc;border:1px solid #e6ebf2;border-left:4px solid #6366f1;border-radius:8px;padding:11px 13px}
+.pr-fsteps{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px}
+.pr-fstep{display:inline-flex;flex-direction:column;justify-content:center;background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:5px 11px;font-size:12px;color:#1e293b}
+.pr-fstep b{color:#6366f1;font-weight:700}.pr-fstep i{font-style:normal;color:#94a3b8;font-size:10.5px}
+.pr-farr{display:inline-flex;align-items:center;color:#94a3b8;font-weight:700}
+.pr-enttab{width:100%;border-collapse:collapse;font-size:12px}
+.pr-enttab th,.pr-enttab td{border:1px solid #eef0f2;padding:7px 9px;text-align:left;vertical-align:top}
+.pr-enttab th{background:#f9fafb;color:#6b7280}
+.pr-mono{font-family:ui-monospace,Menlo,monospace;color:#475569;font-size:11px}
+.pr-card{background:#fff;border-radius:12px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
+.pr-eh{padding:13px 18px;background:linear-gradient(180deg,#f5f3ff,#fff);border-bottom:1px solid #ececf2}
+.pr-et{font-size:15px;font-weight:700;color:#312e81}
+.pr-sys{font-size:12px;font-weight:600;color:#4f46e5;background:#e0e7ff;padding:2px 9px;border-radius:5px;margin-left:8px}
+.pr-uk{font-size:12px;color:#6b7280;margin-top:6px}
+.pr-pipe{display:flex;align-items:center;gap:5px;margin-top:10px;flex-wrap:wrap}
+.pr-step{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:#fff;padding:4px 11px;border-radius:20px}
+.pr-step i{font-style:normal;background:rgba(255,255,255,.3);border-radius:10px;padding:0 6px;font-size:11px}
+.pr-arrow{color:#9ca3af;font-weight:700}
+.pr-stage{border-left:4px solid var(--sc)}
+.pr-sh{display:flex;align-items:center;gap:7px;padding:7px 16px;font-size:13px;font-weight:700;color:var(--sc);border-bottom:1px solid #f0f0f4}
+.pr-sn{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:#fff;border-radius:50%;font-size:12px}
+.pr-sc{margin-left:auto;font-weight:400;color:#94a3b8;font-size:12px}
+.pr-item{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:9px 16px;border-bottom:1px solid #f4f4f7;font-size:12px;align-items:start}
+.pr-item:hover{background:#fafafe}
+.pr-cm{font-weight:600;color:#475569}.pr-ca{color:#374151;margin-top:2px}
+.pr-assert{color:#b91c1c;font-weight:600;margin-top:3px}
+.pr-cebadge{display:inline-block;background:#475569;color:#fff;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600}
+/* 数据血缘细化 */
+.ln-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:900px){.ln-grid{grid-template-columns:1fr 1fr}}
+.ln-env{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:9px 11px;font-size:12px}
+.ln-env.e1{border-top:3px solid #ef4444}.ln-env.e2{border-top:3px solid #f59e0b}.ln-env.e3{border-top:3px solid #3b82f6}.ln-env.e4{border-top:3px solid #10b981}
+.ln-lab{font-weight:700;color:#4338ca;margin-bottom:5px;font-size:12px}
+.ln-d{color:#1e293b;font-weight:600;margin-bottom:4px;line-height:1.5}
+.ln-meta{color:#64748b;font-size:11px;margin-top:2px}
+.ln-fields{color:#0e7490;font-size:11px;margin-top:4px;background:#ecfeff;border:1px solid #cffafe;border-radius:4px;padding:3px 6px;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏛️ 全栈蓝图看板 · 架构 / 页面契约 / 探针</h1>
+  <div class="bar">
+    <div class="layers" id="layers"></div>
+    <select id="syssel" onchange="onSysChange()" style="display:none"></select>
+    <span id="loadinfo" style="font-size:12px;color:#94a3b8"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+</header>
+
+<div class="io">
+  <details>
+    <summary>📥 加载数据（点击展开）<span id="srcinfo" style="font-weight:400;color:#64748b;font-size:12px;margin-left:8px"></span></summary>
+    <div style="padding:0 16px 14px">
+      <div style="margin:10px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label style="cursor:pointer;border:1px solid #2563eb;background:#2563eb;color:#fff;padding:6px 16px;border-radius:6px;font-weight:600">
+          📁 选择架构 JSON
+          <input type="file" id="fi" accept=".json,application/json" style="display:none" onchange="loadFromFile(this.files[0])">
+        </label>
+        <button onclick="autoLoad(true)">🔄 自动加载同目录架构 JSON</button>
+        <span class="err" id="err"></span>
+      </div>
+      <div style="color:#64748b;font-size:12px">架构层读同目录 <code>xz_fitness_platform_arch.json</code>；页面契约/探针层按所选系统懒加载 <code>../blueprints/&lt;sys&gt;_blueprint.json</code> / <code>../probes/&lt;sys&gt;_probe.json</code>（需本地服务器起在项目根或 docs）。</div>
+    </div>
+  </details>
+</div>
+
+<div class="wrap" id="content"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const mer=s=>esc((s||"").replace(/\\n/g,"\n"));
+
+let DATA={}, CUR="ambiguities";
+let LAYER="arch", CUR_SYS="", BP_DATA=null, PROBE_DATA=null, PROBE_TAB="overview";
+const LAYERS=[{k:"arch",t:"🏛️ 架构"},{k:"blueprint",t:"📐 页面契约"},{k:"probe",t:"🧪 探针"}];
+const TABS=[
+  {k:"ambiguities",t:"⚠️ 异常警报"},{k:"systems",t:"🧩 系统清单"},{k:"topology",t:"🌐 全端拓扑"},
+  {k:"functions",t:"🌲 功能清单树"},{k:"coupling",t:"🔗 耦合矩阵"},{k:"rbac",t:"🔐 RBAC 矩阵"},
+  {k:"lineage",t:"🩸 数据血缘"},{k:"share",t:"📋 数据共享目录"},{k:"diagrams",t:"📊 耦合图+泳道"},{k:"api",t:"🔌 API 契约"}
+];
+
+function setSrc(t){ const e=$("#srcinfo"); if(e) e.textContent=t?("· 架构数据源："+t):""; }
+function slugOf(sys){ const s=(DATA.systems||[]).find(x=>x.name===sys); return (s&&s.slug)||sys; }
+
+/* ---------- 加载 ---------- */
+function loadFromFile(file){ if(!file)return; const r=new FileReader();
+  r.onload=()=>{ try{ DATA=JSON.parse(r.result); $("#err").textContent=""; setSrc(file.name); fillSys(); render(); }catch(e){ $("#err").textContent="解析失败："+e.message; } };
+  r.readAsText(file); }
+async function autoLoad(verbose){
+  try{ const res=await fetch("xz_fitness_platform_arch.json",{cache:"no-store"});
+    if(res.ok){ DATA=await res.json(); $("#err").textContent=""; setSrc("xz_fitness_platform_arch.json（自动）"); fillSys(); render(); return true; } }catch(e){}
+  if(verbose) $("#err").textContent="未能自动加载（请用本地服务器或点选择文件）。"; return false;
+}
+async function loadSysFile(layer,sys){
+  const slug=slugOf(sys), info=$("#loadinfo");
+  const path=(layer==="blueprint"?"../blueprints/"+encodeURIComponent(slug)+"_blueprint.json":"../probes/"+encodeURIComponent(slug)+"_probe.json");
+  info.textContent="加载中…";
+  try{ const res=await fetch(path,{cache:"no-store"});
+    if(!res.ok){ info.textContent="⚠️ 「"+sys+"」此层尚未生成"; if(layer==="blueprint")BP_DATA=null;else PROBE_DATA=null; return; }
+    const d=await res.json(); if(layer==="blueprint")BP_DATA=d;else PROBE_DATA=d; info.textContent="✅ 已加载「"+sys+"」";
+  }catch(e){ info.textContent="⚠️ 加载失败「"+sys+"」"; if(layer==="blueprint")BP_DATA=null;else PROBE_DATA=null; }
+}
+
+/* ---------- 头部导航 ---------- */
+function fillSys(){ const sel=$("#syssel"); const sys=(DATA.systems||[]).map(s=>s.name);
+  sel.innerHTML='<option value="">— 选择系统 —</option>'+sys.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("");
+  if(CUR_SYS) sel.value=CUR_SYS; }
+function layersHtml(){ return LAYERS.map(x=>`<div class="layer ${x.k===LAYER?'on':''}" onclick="goLayer('${x.k}')">${x.t}</div>`).join(""); }
+function tabsHtml(){ return TABS.map(x=>`<div class="tab ${x.k===CUR?'on':''}" onclick="go('${x.k}')">${x.t}</div>`).join(""); }
+function go(k){ CUR=k; render(); }
+async function goLayer(k){ LAYER=k; if(k!=="arch"&&CUR_SYS){ await loadSysFile(k,CUR_SYS); } render(); }
+async function onSysChange(){ CUR_SYS=$("#syssel").value; if(LAYER!=="arch"&&CUR_SYS){ await loadSysFile(LAYER,CUR_SYS); } render(); }
+
+/* ---------- 架构层 panes ---------- */
+function paneAmb(){ const a=DATA.ambiguities||[]; if(!a.length)return '<div class="nodata">无异常警报 🎉</div>'; return a.map(x=>`<div class="alert">${esc(x)}</div>`).join(""); }
+function paneSystems(){ const s=DATA.systems||[]; if(!s.length)return '<div class="nodata">无系统清单</div>';
+  const g={}; s.forEach(r=>{(g[r.layer]=g[r.layer]||[]).push(r)});
+  const order=["设备层","终端层","数据资源服务层","支撑层","核心应用层","展示聚合层"];
+  const layers=Object.keys(g).sort((a,b)=>(order.indexOf(a)<0?99:order.indexOf(a))-(order.indexOf(b)<0?99:order.indexOf(b)));
+  return `<div style="margin-bottom:10px;color:#475569;font-size:13px">共 <b>${s.length}</b> 个系统/子系统，按架构分层。</div>`+
+  layers.map(L=>`<div class="card"><div class="ch">🧩 ${esc(L)}（${g[L].length}）</div><div class="cb"><table><tr><th>系统</th><th>职责</th><th>定位</th><th>使用者/端</th><th>核心数据</th><th>来源</th></tr>${g[L].map(r=>`<tr><td><b>${esc(r.name)}</b></td><td>${esc(r.duty)}</td><td><span class="badge">${esc(r.positioning)}</span></td><td>${esc(r.users)}</td><td>${esc(r.core_data)}</td><td><span class="src">${esc(r.source)}</span></td></tr>`).join("")}</table></div></div>`).join(""); }
+function paneTopo(){ let h="";
+  const eps=DATA.endpoints||[];
+  if(eps.length) h+=`<div class="card"><div class="ch">🚪 端总览（${eps.length} 个入口）</div><div class="cb"><table><tr><th>端</th><th>形态</th><th>面向用户</th><th>登录</th><th>部署</th><th>定位</th><th>承载</th></tr>${eps.map(e=>`<tr><td><b>${esc(e.endpoint)}</b></td><td>${esc(e.form)}</td><td>${esc(e.users)}</td><td>${esc(e.login)}</td><td>${esc(e.deploy)}</td><td>${esc(e.duty)}</td><td style="text-align:center">${esc(e.sys_count)}</td></tr>`).join("")}</table></div></div>`;
+  if(DATA.endpoint_mermaid) h+=`<div class="card"><div class="ch">🔗 端-中台拓扑图</div><div class="cb"><div class="mer"><pre class="mermaid">${mer(DATA.endpoint_mermaid)}</pre></div></div></div>`;
+  const mx=DATA.endpoint_matrix||[];
+  if(mx.length){ const cell=v=>{v=v||"—"; const d=(v.indexOf("—")>=0)?' style="color:#cbd5e1;text-align:center"':''; return `<td${d}>${esc(v)}</td>`;};
+    const byL={}; mx.forEach(r=>{(byL[r.layer]=byL[r.layer]||[]).push(r)});
+    h+=`<div class="card"><div class="ch">🧮 端 × 系统 覆盖矩阵</div><div class="cb" style="overflow:auto"><table><tr><th>系统</th><th>PC业务门户</th><th>PC公众门户</th><th>小程序&App</th><th>App政务版</th><th>现场终端</th></tr>${Object.keys(byL).map(L=>`<tr><td colspan="6" style="background:#eef2ff;font-weight:700;color:#3730a3">${esc(L)}</td></tr>`+byL[L].map(r=>`<tr><td><b>${esc(r.system)}</b></td>${cell(r.gov_pc)}${cell(r.pub_pc)}${cell(r.pub_app)}${cell(r.gov_app)}${cell(r.terminal)}</tr>`).join("")).join("")}</table></div></div>`; }
+  const t=DATA.topology||[];
+  if(t.length){ const g={}; t.forEach(r=>{(g[r.endpoint]=g[r.endpoint]||[]).push(r)});
+    h+=`<div class="card"><div class="ch">📑 端承载明细（${t.length} 条）</div><div class="cb">`+Object.keys(g).map(ep=>`<div style="font-weight:700;color:#3730a3;margin:8px 0 4px">📱 ${esc(ep)}</div><table><tr><th>角色</th><th>子系统/模块</th><th>说明</th></tr>${g[ep].map(r=>`<tr><td>${esc(r.role)}</td><td><span class="badge">${esc(r.module)}</span></td><td>${esc(r.desc)}</td></tr>`).join("")}</table>`).join("")+`</div></div>`; }
+  return h||'<div class="nodata">无拓扑数据</div>'; }
+function paneFunc(){ const f=DATA.functions||[]; if(!f.length)return '<div class="nodata">无功能数据</div>';
+  const g={}; f.forEach(r=>{(g[r.l1]=g[r.l1]||[]).push(r)}); let h=`<div style="margin-bottom:8px;color:#475569;font-size:13px">共 <b>${f.length}</b> 条功能（到末级）。</div><div class="card"><div class="cb tree">`;
+  for(const l1 in g){ h+=`<div class="l1">📂 ${esc(l1)}（${g[l1].length}）</div>`; const byL2={}; g[l1].forEach(r=>{(byL2[r.l2||""]=byL2[r.l2||""]||[]).push(r)});
+    for(const l2 in byL2){ if(l2)h+=`<div class="l2">▸ ${esc(l2)}</div>`; byL2[l2].forEach(r=>{const leaf=r.l3||r.l2||r.l1; h+=`<div class="l3">• ${esc(leaf)} <span class="d">— ${esc(r.desc||"")}</span> ${r.source?`<span class="src">${esc(r.source)}</span>`:""}</div>`;}); } }
+  return h+'</div></div>'; }
+function paneCoupling(){ const c=DATA.coupling_table||[]; if(!c.length)return '<div class="nodata">无耦合矩阵</div>';
+  const lvl=x=>x.level?`<span class="badge">${esc(x.level)}</span> `:"";
+  return `<div style="margin-bottom:8px;color:#475569;font-size:13px">共 <b>${c.length}</b> 条耦合关系（系统级 + 模块级）。</div><div class="card"><div class="cb"><table><tr><th>提供方/上游</th><th>消费方/下游</th><th>共享数据</th><th>流通加工</th><th>菜单复用</th></tr>${c.map(x=>`<tr><td>${lvl(x)}<b>${esc(x.from)}</b></td><td>${esc(x.to)}</td><td>${esc(x.shared)}</td><td>${esc(x.processing)}</td><td>${esc(x.reuse)}</td></tr>`).join("")}</table></div></div>`; }
+function paneRbac(){ const r=DATA.rbac||[]; if(!r.length)return '<div class="nodata">无 RBAC 数据</div>';
+  const hasOp=r.some(x=>x.operations||x.menu);
+  if(hasOp) return `<div style="margin-bottom:8px;color:#475569;font-size:13px">共 <b>${r.length}</b> 条（角色×系统×一级菜单×操作×数据范围）。</div><div class="card"><div class="cb" style="overflow:auto"><table><tr><th>角色</th><th>系统</th><th>一级菜单</th><th>操作(增/删/改/查/导出/审批)</th><th>数据范围</th><th>数据隔离</th></tr>${r.map(x=>`<tr><td><b>${esc(x.role)}</b></td><td>${esc(x.system)}</td><td>${esc(x.menu||"—")}</td><td>${esc(x.operations||x.permissions||"—")}</td><td>${esc(x.data_scope||"—")}</td><td>${esc(x.isolation||"—")}</td></tr>`).join("")}</table></div></div>`;
+  return `<div class="card"><div class="cb"><table><tr><th>角色</th><th>所属系统</th><th>权限范围</th><th>数据隔离</th></tr>${r.map(x=>`<tr><td><b>${esc(x.role)}</b></td><td>${esc(x.system)}</td><td>${esc(x.permissions)}</td><td>${esc(x.isolation)}</td></tr>`).join("")}</table></div></div>`; }
+function paneLineage(){ const l=DATA.lineage||[]; if(!l.length)return '<div class="nodata">无血缘数据</div>';
+  const env=(cls,label,v)=>{ if(v==null||v===""){return `<div class="ln-env ${cls}"><div class="ln-lab">${label}</div><div class="ln-d">-</div></div>`;} if(typeof v==="string"){return `<div class="ln-env ${cls}"><div class="ln-lab">${label}</div><div class="ln-d">${esc(v)}</div></div>`;} return `<div class="ln-env ${cls}"><div class="ln-lab">${label}</div><div class="ln-d">${esc(v.desc||"")}</div>${v.how?`<div class="ln-meta">🛠 方式：${esc(v.how)}</div>`:""}${v.system?`<div class="ln-meta">📦 系统/模块：${esc(v.system)}</div>`:""}${v.fields?`<div class="ln-fields">🔑 ${esc(v.fields)}</div>`:""}${v.section?`<div style="margin-top:3px"><span class="src">${esc(v.section)}</span></div>`:""}</div>`; };
+  const refined=l.filter(x=>x&&typeof x.produce==="object").length;
+  return `<div style="margin-bottom:8px;color:#475569;font-size:13px">共 <b>${l.length}</b> 个核心实体（来源→加工→使用→流出，其中 <b>${refined}</b> 个已细化到方式/系统/字段）。</div>`+l.map(x=>`<div class="card"><div class="ch">🩸 ${esc(x.entity)}</div><div class="cb"><div class="ln-grid">${env("e1","① 来源 Produce",x.produce)}${env("e2","② 加工 Process",x.process)}${env("e3","③ 使用 Consume",x.consume)}${env("e4","④ 流出 Export",x.export)}</div></div></div>`).join(""); }
+function paneShare(){ const s=DATA.share_catalog||[]; if(!s.length)return '<div class="nodata">无数据共享目录</div>';
+  return `<div style="margin-bottom:10px;color:#475569;font-size:13px">共 <b>${s.length}</b> 类信息资源。</div><div class="card"><div class="cb"><table><tr><th>信息资源</th><th>共享类型</th><th>共享方式</th><th>向社会开放</th><th>开放条件</th><th>更新</th><th>典型信息项</th><th>来源</th></tr>${s.map(x=>`<tr><td><b>${esc(x.resource)}</b></td><td>${esc(x.share_type)}</td><td>${esc(x.share_method)}</td><td>${esc(x.to_society)}</td><td>${esc(x.open_cond)}</td><td>${esc(x.update)}</td><td>${esc(x.items_sample)}</td><td><span class="src">${esc(x.source)}</span></td></tr>`).join("")}</table></div></div>`; }
+function paneDiagrams(){ let h=`<div class="card"><div class="ch">🔗 系统耦合拓扑图</div><div class="cb"><div class="mer"><pre class="mermaid">${mer(DATA.coupling_mermaid)}</pre></div></div></div>`;
+  const sw=DATA.swimlanes;
+  if(Array.isArray(sw)&&sw.length) h+=`<div style="margin:8px 0;color:#475569;font-size:13px">共 <b>${sw.length}</b> 条业务流程泳道。</div>`+sw.map(s=>`<div class="card"><div class="ch">🏊 ${esc(s.title||"业务流程")}</div><div class="cb"><div class="mer"><pre class="mermaid">${mer(s.mermaid)}</pre></div></div></div>`).join("");
+  else h+=`<div class="card"><div class="ch">🏊 核心业务泳道</div><div class="cb"><div class="mer"><pre class="mermaid">${mer(DATA.swimlane_mermaid)}</pre></div></div></div>`;
+  return h; }
+function paneApi(){ const a=DATA.api||[]; if(!a.length)return '<div class="nodata">无 API 数据</div>';
+  return `<div style="margin-bottom:8px;color:#475569;font-size:13px">共 <b>${a.length}</b> 条接口（含调用方 / <b>调用角色</b> / <b>涉及业务</b>）。</div><div class="card"><div class="cb"><table style="table-layout:fixed;width:100%;word-break:break-word"><colgroup><col style="width:13%"><col style="width:15%"><col style="width:21%"><col style="width:13%"><col style="width:11%"><col style="width:18%"><col style="width:9%"></colgroup><tr><th>接口</th><th>用途</th><th>参数</th><th>调用方</th><th>调用角色</th><th>涉及业务</th><th>来源</th></tr>${a.map(x=>`<tr><td><code style="word-break:break-all">${esc(x.name)}</code></td><td>${esc(x.purpose)}</td><td>${esc(x.params)}</td><td>${esc(x.caller)}</td><td><b style="color:#4338ca">${esc(x.role||"—")}</b></td><td>${esc(x.business)}</td><td>${x.source?`<span class="src">${esc(x.source)}</span>`:""}</td></tr>`).join("")}</table></div></div>`; }
+
+/* ---------- L2 页面契约层(左菜单导航) ---------- */
+function bpTypeCls(t){t=(t||"").toLowerCase();return t.indexOf("enum")>=0?"t-enum":(t.indexOf("number")>=0||t.indexOf("num")>=0)?"t-num":t.indexOf("date")>=0?"t-date":t.indexOf("bool")>=0?"t-bool":"";}
+function bpRmk(r){r=esc(r||"");return r.replace(/(PDF明示|域驱动|藏汉双语|双语|父级·防断链|防断链|金额链路·防兜底价|防兜底价|唯一|状态机变色[：:][^，,；;]*)/g,'<span class="bp-rmk">$1</span>');}
+function bpId(p){return "bp-"+String(p.route_path||p.page_menu_name).replace(/[^a-zA-Z0-9]/g,"_");}
+function paneBlueprint(){
+  if(!CUR_SYS) return '<div class="nodata">请在上方「系统」下拉中选择一个系统加载其页面契约。</div>';
+  const bp=BP_DATA; if(!bp||!bp.length) return `<div class="nodata">系统「${esc(CUR_SYS)}」的页面契约尚未生成。</div>`;
+  const g={}; bp.forEach(p=>{(g[p.menu_group||"未分组"]=g[p.menu_group||"未分组"]||[]).push(p)});
+  let fields=0,acts=0,inputs=0,sms=0,trans=0;
+  bp.forEach(p=>{const ac=p.atomic_contract||{};fields+=(ac.data_view||[]).length;acts+=(ac.action_view||[]).length;inputs+=(ac.input_view||[]).length;if(p.state_machine){sms++;trans+=(p.state_machine.transitions||[]).length;}});
+  let stat=`<div class="bp-stat"><span>系统 <b>${esc(CUR_SYS)}</b></span><span>一级菜单 <b>${Object.keys(g).length}</b></span><span>二级页面 <b>${bp.length}</b></span><span>字段 <b>${fields}</b></span><span>操作 <b>${acts}</b></span><span>输入项 <b>${inputs}</b></span><span>状态机 <b>${sms}</b></span><span>转移 <b>${trans}</b></span></div>`;
+  // 左侧菜单导航
+  let toc='<div class="bp-toc"><div class="bp-tt">菜单导航 · 防漏核对</div>';
+  for(const grp in g){ toc+=`<div class="bp-gh">📂 ${esc(grp)}（${g[grp].length}）</div>`;
+    g[grp].forEach(p=>{toc+=`<a href="#${bpId(p)}" onclick="var el=document.getElementById('${bpId(p)}');if(el)el.scrollIntoView({behavior:'smooth'});return false;">${esc(p.page_menu_name)}${p.state_machine?' <span style="color:#7c3aed">⚙</span>':''}<span class="bp-rp">${esc(p.route_path||"")}</span></a>`;});
+  }
+  toc+='</div>';
+  // 右侧内容
+  let main='<div class="bp-main">';
+  for(const grp in g){ main+=`<div class="bp-gband"><h2>${esc(grp)}</h2><span class="bp-gcount">${g[grp].length} 个二级页面</span></div>`;
+    g[grp].forEach(p=>{const ac=p.atomic_contract||{};
+      main+=`<div class="bp-card" id="${bpId(p)}"><div class="bp-eh"><span class="bp-lv">二级</span><span class="bp-et">${esc(p.page_menu_name)}</span><span class="bp-rp2">${esc(p.route_path||"")}</span>${p.reference_section?`<span class="bp-ref">${esc(p.reference_section)}</span>`:""}${p.state_machine?'<span class="bp-smtag">⚙ 状态机</span>':''}</div><div class="bp-sec">`;
+      const dv=ac.data_view||[];
+      main+=`<div class="bp-sl"><span class="bp-ico d">📋</span>data_view 列表/详情字段 <span class="bp-cnt">${dv.length}</span></div>`;
+      if(dv.length)main+=`<table class="bp-t"><tr><th style="width:30%">字段</th><th style="width:12%">类型</th><th>备注</th></tr>${dv.map(d=>`<tr><td><b>${esc(d.field)}</b></td><td><span class="bp-badge ${bpTypeCls(d.type)}">${esc(d.type)}</span></td><td>${bpRmk(d.remark)}</td></tr>`).join("")}</table>`;
+      const av=ac.action_view||[];
+      main+=`<div class="bp-sl"><span class="bp-ico a">🔘</span>action_view 动作 <span class="bp-cnt">${av.length}</span></div>`;
+      if(av.length)main+=`<table class="bp-t"><tr><th style="width:28%">动作</th><th style="width:20%">类型</th><th style="width:20%">权限</th><th>备注</th></tr>${av.map(d=>`<tr><td><b>${esc(d.action_name)}</b></td><td><span class="bp-badge">${esc(d.type)}</span></td><td><span class="bp-perm">${esc(d.permission)}</span></td><td>${esc(d.remark||"")}</td></tr>`).join("")}</table>`;
+      const iv=ac.input_view||[];
+      main+=`<div class="bp-sl"><span class="bp-ico i">⌨️</span>input_view 输入项 <span class="bp-cnt">${iv.length}</span></div>`;
+      if(iv.length)main+=`<table class="bp-t"><tr><th style="width:30%">标签</th><th style="width:18%">组件</th><th style="width:12%">必填</th><th>备注</th></tr>${iv.map(d=>`<tr><td><b>${esc(d.input_label)}</b></td><td><span class="bp-badge comp">${esc(d.component)}</span></td><td>${d.required?'<span class="bp-req y">必填</span>':'<span class="bp-req n">选填</span>'}</td><td>${bpRmk(d.remark)}</td></tr>`).join("")}</table>`;
+      if(p.state_machine){const sm=p.state_machine;
+        main+=`<div class="bp-sl"><span class="bp-ico s">⚙️</span>状态机：${esc(sm.entity)}（初始 ${esc(sm.initial)}）<span class="bp-cnt">${(sm.transitions||[]).length} 转移</span></div><table class="bp-t"><tr><th style="width:24%">从</th><th style="width:20%">动作</th><th style="width:24%">到</th><th>约束(guard)</th></tr>${(sm.transitions||[]).map(t=>`<tr><td><span class="bp-stt">${esc(t.from)}</span></td><td class="bp-act">${esc(t.action)}</td><td><span class="bp-stt to">${esc(t.to)}</span></td><td class="bp-flag">${esc(t.guard||"")}</td></tr>`).join("")}</table>`;}
+      main+=`</div></div>`;
+    });
+  }
+  main+='</div>';
+  return stat+'<div class="bp-wrap">'+toc+main+'</div>';
+}
+
+/* ---------- L4 探针层(双Tab) ---------- */
+function goProbeTab(t){ PROBE_TAB=t; render(); }
+const PR_SEG=[["1_create","#ef4444","① 创建·投毒"],["2_publish","#f59e0b","② 发布·组装"],["3_use","#3b82f6","③ 使用·消费"],["4_statistics","#8b5cf6","④ 统计·回流"],["5_crossref","#10b981","⑤ 跨系统穿透"]];
+function paneProbe(){
+  if(!CUR_SYS) return '<div class="nodata">请在上方「系统」下拉中选择一个系统加载其探针剧本。</div>';
+  const pd=PROBE_DATA; if(!pd) return `<div class="nodata">系统「${esc(CUR_SYS)}」的探针剧本尚未生成。</div>`;
+  const sys=(pd.tab1_overview&&pd.tab1_overview.systems&&pd.tab1_overview.systems[0])||pd;
+  const ents=pd.tab2_execution||pd.entities||[];
+  const tabs=`<div class="pr-tabs"><div class="pr-tab ${PROBE_TAB==='overview'?'on':''}" onclick="goProbeTab('overview')">📊 业务全景（Golden Path）</div><div class="pr-tab ${PROBE_TAB==='exec'?'on':''}" onclick="goProbeTab('exec')">🎯 探针执行剧本</div></div>`;
+  return tabs+(PROBE_TAB==='overview'?probeOverview(sys,ents):probeExec(ents));
+}
+function probeOverview(s,fallbackEnts){
+  let h=`<div class="pr-ov"><h2>${esc(s.system_name||s.system||CUR_SYS)}</h2>`;
+  if(s.business_target) h+=`<div class="pr-goal"><b style="color:#4338ca">🎯 业务目标　</b>${esc(s.business_target)}</div>`;
+  const ts=s.testing_strategy;
+  if(ts){ h+=`<div class="pr-strat"><span class="pr-lab">✅ 测试七寸（核心卡点与高风险区）</span>`+(Array.isArray(ts)?`<ul style="margin:0;padding-left:18px">${ts.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:esc(ts))+`</div>`; }
+  const gp=s.golden_path||[];
+  if(gp.length){ const isFlow=gp[0]&&(gp[0].steps||gp[0].flowname);
+    if(isFlow){ h+=`<div class="pr-seclabel">🛣️ 核心业务链路（${gp.length} 条流程）</div>`;
+      gp.forEach(f=>{ const steps=f.steps||[]; h+=`<div class="pr-flow"><div class="pr-flowhd"><span class="pr-flowname">${esc(f.flowname||"")}</span>${f.flowsrc?`<span class="pr-flowsrc">${esc(f.flowsrc)}</span>`:""}</div><div class="pr-fsteps">`;
+        steps.forEach((st,i)=>{ h+=`${i>0?'<span class="pr-farr">→</span>':''}<span class="pr-fstep"><span><b>${i+1}</b> ${esc(typeof st==='string'?st:(st.step_name||""))}</span></span>`; });
+        h+=`</div></div>`; });
+    } else { h+=`<div class="pr-seclabel">🛣️ 核心业务链路（${gp.length} 步）</div><div class="pr-flow"><div class="pr-fsteps">`;
+      gp.forEach((st,i)=>{ h+=`${i>0?'<span class="pr-farr">→</span>':''}<span class="pr-fstep"><span><b>${i+1}</b> ${esc(st.step_name||"")}</span><i>${esc(st.role_endpoint||"")}</i></span>`; });
+      h+=`</div></div>`; }
+  }
+  const ents=s.entities||fallbackEnts||[];
+  if(ents.length){ const hasCat=ents[0]&&ents[0].category!=null;
+    h+=`<div class="pr-seclabel">📦 核心实体（${ents.length}）</div><table class="pr-enttab"><tr>${hasCat?'<th>分类</th>':''}<th>实体</th><th>唯一标识</th><th>业务价值</th></tr>${ents.map(e=>{const id=e.identifier||e.unique_id||"";const bv=e.business_value||e.business_target||"";return `<tr>${hasCat?`<td>${esc(e.category||"")}</td>`:''}<td><b>${esc(e.entity_name)}</b></td><td class="pr-mono">${esc(id)}</td><td>${esc(bv)}</td></tr>`;}).join("")}</table>`;
+  }
+  h+=`</div>`;
+  return h;
+}
+function probeExec(ents){
+  ents=ents||[];
+  let h=`<div style="margin-bottom:10px;color:#475569;font-size:13px">共 <b>${ents.length}</b> 个探针实体 · 五段式生命周期(创建投毒→发布→使用→统计→跨系统穿透)。</div>`;
+  ents.forEach(e=>{ const pp=e.primary_probe||{};
+    h+=`<div class="pr-card"><div class="pr-eh"><span class="pr-et">🧪 ${esc(e.entity_name)}</span><span class="pr-sys">${esc(e.system||"")}</span><div class="pr-uk">唯一标识：${esc(e.unique_id||"")}　·　主探针 <span class="probe">${esc(pp.Name||"")}=${esc(pp.Key_Value||"")}</span></div><div class="pr-pipe">`;
+    PR_SEG.forEach(([k,c,label],i)=>{ const seg=(e.stages||{})[k]; const n=seg&&seg.checks?seg.checks.length:0; if(n) h+=`${i>0?'<span class="pr-arrow">→</span>':''}<span class="pr-step" style="background:${c}">${label}<i>${n}</i></span>`; });
+    h+=`</div></div>`;
+    PR_SEG.forEach(([k,c,label])=>{ const seg=(e.stages||{})[k]; if(!seg||!seg.checks||!seg.checks.length)return;
+      h+=`<div class="pr-stage" style="--sc:${c}"><div class="pr-sh"><span class="pr-sn" style="background:${c}">${label.slice(0,1)}</span>${label}<span class="pr-sc">${seg.checks.length} 检查项</span></div>`;
+      seg.checks.forEach(ck=>{ h+=`<div class="pr-item"><div><span class="pr-cebadge">${esc(ck.client_end)}</span></div><div><div class="pr-cm">${esc(ck.system_module)}</div>${ck.action?`<div class="pr-ca">${esc(ck.action)}</div>`:''}${ck.assertion?`<div class="pr-assert">断言：${esc(ck.assertion)}</div>`:''}${ck.probe_data?`<div style="margin-top:3px"><span class="probe">${esc(JSON.stringify(ck.probe_data))}</span></div>`:''}</div></div>`; });
+      h+=`</div>`;
+    });
+    h+=`</div>`;
+  });
+  return h;
+}
+
+/* ---------- Mermaid 缩放/拖拽/全屏增强 ---------- */
+function enhanceMermaid(){
+  document.querySelectorAll('.mer').forEach(box=>{
+    if(box.dataset.zoom)return; const svg=box.querySelector('svg'); if(!svg)return; box.dataset.zoom='1';
+    let scale=1,tx=0,ty=0,drag=false,ox=0,oy=0;
+    const apply=()=>{svg.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';};
+    const ctl=document.createElement('div'); ctl.className='mer-ctl';
+    ctl.innerHTML='<button title="放大">＋</button><button title="缩小">－</button><button title="适配/重置">⟲</button><button title="全屏">⛶</button>';
+    const hint=document.createElement('div'); hint.className='mer-hint'; hint.textContent='滚轮缩放 · 拖拽平移 · ⛶全屏';
+    box.appendChild(ctl); box.appendChild(hint);
+    const b=ctl.querySelectorAll('button');
+    const zoom=(f,cx,cy)=>{const r=box.getBoundingClientRect();cx=(cx==null?r.width/2:cx-r.left);cy=(cy==null?r.height/2:cy-r.top);
+      const ns=Math.min(8,Math.max(0.2,scale*f));tx=cx-(cx-tx)*(ns/scale);ty=cy-(cy-ty)*(ns/scale);scale=ns;apply();};
+    b[0].onclick=()=>zoom(1.25); b[1].onclick=()=>zoom(0.8);
+    b[2].onclick=()=>{scale=1;tx=0;ty=0;apply();};
+    b[3].onclick=()=>{ if(!document.fullscreenElement){box.requestFullscreen&&box.requestFullscreen();} else {document.exitFullscreen&&document.exitFullscreen();} };
+    box.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY<0?1.12:0.89,e.clientX,e.clientY);},{passive:false});
+    svg.addEventListener('mousedown',e=>{drag=true;ox=e.clientX-tx;oy=e.clientY-ty;svg.style.cursor='grabbing';e.preventDefault();});
+    window.addEventListener('mousemove',e=>{if(!drag)return;tx=e.clientX-ox;ty=e.clientY-oy;apply();});
+    window.addEventListener('mouseup',()=>{drag=false;svg.style.cursor='grab';});
+  });
+}
+
+/* ---------- 渲染主控 ---------- */
+function render(){
+  $("#layers").innerHTML=layersHtml();
+  const showSys=(LAYER!=="arch");
+  $("#syssel").style.display=showSys?"":"none";
+  $("#tabs").style.display=(LAYER==="arch")?"":"none";
+  $("#tabs").innerHTML=tabsHtml();
+  let html="";
+  if(LAYER==="arch"){ const m={ambiguities:paneAmb,systems:paneSystems,topology:paneTopo,functions:paneFunc,coupling:paneCoupling,rbac:paneRbac,lineage:paneLineage,share:paneShare,diagrams:paneDiagrams,api:paneApi}; html=(m[CUR]||paneAmb)(); }
+  else if(LAYER==="blueprint") html=paneBlueprint();
+  else if(LAYER==="probe") html=paneProbe();
+  $("#content").innerHTML=html;
+  if(LAYER==="arch"&&(CUR==="diagrams"||CUR==="topology")){ try{ mermaid.initialize({startOnLoad:false}); mermaid.run({querySelector:".mermaid"}).then(enhanceMermaid).catch(()=>setTimeout(enhanceMermaid,400)); setTimeout(enhanceMermaid,600); }catch(e){} }
+}
+mermaid.initialize({startOnLoad:false});
+render();
+autoLoad(false);
+</script>
+</body>
+</html>

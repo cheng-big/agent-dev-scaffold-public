@@ -6,7 +6,7 @@ import { existsSync } from 'node:fs';
 import { relative, resolve, isAbsolute, sep } from 'node:path';
 import { computeNext, computePhaseView } from './process.mjs';
 import { memoryDetail } from './stats.mjs';
-import { detectSkill, skillBadge } from './skills.mjs';
+import { skillBadge, skillInfo } from './skills.mjs';
 import { checkKnowledge, knowledgePath, readKnowledge } from './knowledge.mjs';
 
 const esc = (s) => String(s == null ? '' : s)
@@ -130,12 +130,12 @@ export function buildBoardHtml(p, state, { cwd = process.cwd(), generatedAt = ne
       </tr>`).join('')).join('');
 
   const skillSet = new Map();
-  for (const ph of phases) for (const s of (ph.skills || [])) if (!skillSet.has(s)) skillSet.set(s, detectSkill(s, { cwd }));
+  for (const ph of phases) for (const s of (ph.skills || [])) if (!skillSet.has(s)) skillSet.set(s, skillInfo(s, { cwd }));
   const bandRows = phases.map((ph) => {
     const sks = (ph.skills || []).map((s) => {
-      const stt = skillSet.get(s);
-      const c = stt === 'installed' ? '#15664e' : stt === 'not_found' ? '#aa4638' : '#8a97a5';
-      return `<span class="skpill" style="border-color:${c};color:${c}">${esc(s)} ${skillBadge(stt)}</span>`;
+      const info = skillSet.get(s);
+      const c = info.state === 'installed' ? '#15664e' : info.state === 'not_found' ? '#aa4638' : '#8a97a5';
+      return `<span class="skpill" style="border-color:${c};color:${c}">${esc(s)} ${skillBadge(info.state, info.source)}</span>`;
     }).join(' ');
     return `<div class="bandrow"><span class="bp">${esc(ph.no || '')} ${esc(ph.name)}</span><span class="bs">${sks || '<span class="dim">（未绑定 skill）</span>'}</span></div>`;
   }).join('');

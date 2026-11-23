@@ -348,8 +348,12 @@ test('install selects Bugfix without replacing an active development workflow', 
   const source = join(dirname(cli), '..');
   mkdirSync(home);
   cpSync(join(source, 'PROJECT.md.template'), join(home, 'PROJECT.md.template'));
+  cpSync(join(source, 'skills'), join(home, 'skills'), { recursive: true });
   const run = (...args) => runCli(home, args, root);
-  assert.equal(run('install').status, 0);
+  const installed = run('install');
+  assert.equal(installed.status, 0, installed.stdout);
+  assert.match(installed.stdout, /均已检测到/);
+  assert.ok(existsSync(join(home, 'skills', 'flow-probe', 'SKILL.md')));
   const processFile = join(home, 'process.json');
   const development = readFileSync(processFile, 'utf8');
   const start = run('phase', 'start', JSON.parse(development).phases[0].id);

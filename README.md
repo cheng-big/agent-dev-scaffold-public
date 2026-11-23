@@ -25,7 +25,7 @@
   - **强引导**：每个改状态命令末尾自动附「下一步 →」；`next` 随时给唯一下一步（含该调哪个 skill、该读哪个输入真源）。
   - **产物真源=磁盘**：`artifact add` 登记，`next/board/status` 一律 `existsSync` 回读，缺失如实标 ✗。
   - **进度看板** `board`：自包含 HTML，**流程 tab**（地铁线当前站高亮 + 产出物总账 + skillband）/ **记忆 tab**（记忆概览 + 事件分布 + 任务卡片 + 决策 + 时间线）双 tab。
-  - **skill 引导指针**：每阶段绑该调的 skill（不自动执行），看板标 ✓已装/✗未装。
+  - **skill 引导指针**：每阶段绑该调的 skill（不自动执行），默认 skill 随 `.agent/skills/` 分发，看板标 ✓项目内置/✓全局已装/✗未装。
 - **外部写入硬门**：步骤声明 `--effect external-write --target ...` 后，只有每个目标都有独立上下文持久化回读 PASS 才允许提交/恢复。
 - **可选 Bugfix Extension**：10 阶段流程，支持 Bug 登记、无损同步、影响面复核、证据归档和报告新鲜度检查。
 - **反馈进化层 Harness Evolver**：批量解析历史反馈，归因到需求/数据库/编码/测试阶段，增量去重更新规则库，并在 `next/context/resume/phase start` 自动注入当前阶段。
@@ -48,6 +48,7 @@ python3 -m unittest discover -s harness_evolver/tests -v  # 应 7/7 绿
 
 - 升级已装旧版：见 `dot-agent/UPGRADE-PROMPT.md`。
 - 方法论/字段/换 skill：见 `dot-agent/process/README.md`、`dot-agent/process/SKILLS.md`。
+- 默认 skill 本体在 `dot-agent/skills/`，复制到目标项目后位于 `.agent/skills/`，不需要依赖某台电脑的全局 skill。
 - 命令与用法详见 `dot-agent/README.md`，移植细节 `dot-agent/PORTING.md`。
 
 ## 日常（照着 next 走）

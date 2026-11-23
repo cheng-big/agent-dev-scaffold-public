@@ -30,7 +30,7 @@ import {
   captureKnowledge, checkKnowledge, confirmKnowledge, deliverKnowledge, featureId, featureRefs,
   initKnowledge, readKnowledge, retrieveKnowledge,
 } from './lib/knowledge.mjs';
-import { detectSkill, skillBadge } from './lib/skills.mjs';
+import { skillBadge, skillInfo } from './lib/skills.mjs';
 import { memoryStats } from './lib/stats.mjs';
 import { parseTargets, assertExternalWriteEvidence } from './lib/effects.mjs';
 import { buildRepoMap } from './lib/repomap.mjs';
@@ -763,13 +763,13 @@ commands.install = ({ flags }) => {
     if (missing.length) { appendFileSync(gi, (cur.endsWith('\n') ? '' : '\n') + missing.join('\n') + '\n'); done.push(`补充 .gitignore 缺失运行时规则：${missing.join(' ')}`); }
     else done.push('.gitignore 已含 .agent 规则，跳过');
   }
-  // 探测 process.json 引用的 skill 是否已装（skill 本体不随模板打包，见 process/SKILLS.md）
+  // 探测 process.json 引用的 skill 是否已装，项目内置 skill 优先。
   let missingSkills = [];
   if (processExists()) {
     try {
       const p = loadProcess();
       const names = [...new Set((p.phases || []).flatMap((ph) => ph.skills || []))];
-      missingSkills = names.filter((n) => detectSkill(n) !== 'installed');
+      missingSkills = names.filter((n) => skillInfo(n).state !== 'installed');
       if (missingSkills.length) done.push(`⚠ 方法论引用了 ${names.length} 个 skill，其中 ${missingSkills.length} 个未检测到：${missingSkills.join(', ')}（见 .agent/process/SKILLS.md）`);
       else if (names.length) done.push(`方法论引用的 ${names.length} 个 skill 均已检测到 ✓`);
     } catch { /* process.json 异常不阻塞 install */ }
@@ -819,7 +819,10 @@ commands.process = ({ positional }) => {
       const req = v.artifacts.filter((a) => a.required).length;
       const cur = st.current_phase === ph.id ? ' ←' : '';
       lines.push(`  [${v.status}] ${ph.no || ''} ${ph.name}  产物 ${done}/${v.artifacts.length}（required ${req}）${v.advanceable ? ' 可推进' : ''}${cur}`);
-      for (const s of ph.skills || []) lines.push(`        skill ${s} ${skillBadge(detectSkill(s))}`);
+      for (const s of ph.skills || []) {
+        const info = skillInfo(s);
+        lines.push(`        skill ${s} ${skillBadge(info.state, info.source)}`);
+      }
     }
     ok(withNext(lines.join('\n')), { current_phase: st.current_phase, phases: p.phases.map((ph) => ({ id: ph.id, status: phaseStatus(st, ph.id) })) });
     return;
